@@ -2358,6 +2358,33 @@ body {
   color: var(--accent-saffron);
 }
 
+.ai-metrics-overlay {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-end;
+  z-index: 10;
+}
+
+.metric-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-pill);
+  color: #FFFFFF;
+  font-family: var(--font-family-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+
 
 
 
