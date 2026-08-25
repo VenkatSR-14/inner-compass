@@ -2,14 +2,22 @@ import React, { useState } from 'react';
 import { Compass } from 'lucide-react';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import Sidebar from './components/Sidebar';
+import HomeFeed from './components/HomeFeed';
+import MindfulClips from './components/MindfulClips';
+import SearchPage from './components/SearchPage';
+import LikesPage from './components/LikesPage';
+import MessagingPage from './components/MessagingPage';
 import Dashboard from './components/Dashboard';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
+  const [authTab, setAuthTab] = useState('login'); // 'login' | 'register'
   const [user, setUser] = useState(null);
+  const [activeNavTab, setActiveNavTab] = useState('home'); // Default post-login landing: 'home'
 
   const handleAuthSuccess = (userData) => {
     setUser(userData);
+    setActiveNavTab('home'); // Ensure landing on Home Feed after authentication
   };
 
   const handleLogout = () => {
@@ -17,50 +25,67 @@ export default function App() {
   };
 
   return (
-    <div className="app-viewport">
-      {/* Background Ambient Orbs */}
-      <div className="ambient-orb-1"></div>
-      <div className="ambient-orb-2"></div>
+    <div className={user ? "app-authenticated-shell" : "app-viewport"}>
+      {!user ? (
+        <>
+          {/* Background Ambient Orbs */}
+          <div className="ambient-orb-1"></div>
+          <div className="ambient-orb-2"></div>
 
-      {/* Brand Header */}
-      <header className="brand-header">
-        <div className="brand-title-group">
-          <Compass className="brand-icon" size={36} />
-          <h1 className="brand-name">INNER COMPASS</h1>
-        </div>
-        <p className="brand-tagline">
-          Rational Cognition & Somatic Yoga Platform
-        </p>
-      </header>
+          {/* Unauthenticated Brand Header */}
+          <header className="brand-header">
+            <div className="brand-title-group">
+              <Compass className="brand-icon" size={36} />
+              <h1 className="brand-name">INNER COMPASS</h1>
+            </div>
+            <p className="brand-tagline">
+              Rational Cognition & Somatic Yoga Platform
+            </p>
+          </header>
 
-      {/* Main Content View */}
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
+          {/* Unauthenticated Auth Card */}
+          <main className="auth-card">
+            <div className="tab-header">
+              <button
+                className={`tab-btn ${authTab === 'login' ? 'active' : ''}`}
+                onClick={() => setAuthTab('login')}
+              >
+                Sign In
+              </button>
+              <button
+                className={`tab-btn ${authTab === 'register' ? 'active' : ''}`}
+                onClick={() => setAuthTab('register')}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {authTab === 'login' ? (
+              <LoginForm onSuccess={handleAuthSuccess} />
+            ) : (
+              <RegisterForm onSuccess={handleAuthSuccess} />
+            )}
+          </main>
+        </>
       ) : (
-        <main className="auth-card">
-          {/* Tab Navigation */}
-          <div className="tab-header">
-            <button
-              className={`tab-btn ${activeTab === 'login' ? 'active' : ''}`}
-              onClick={() => setActiveTab('login')}
-            >
-              Sign In
-            </button>
-            <button
-              className={`tab-btn ${activeTab === 'register' ? 'active' : ''}`}
-              onClick={() => setActiveTab('register')}
-            >
-              Create Account
-            </button>
-          </div>
+        /* Authenticated Instagram-Style Two-Column Layout */
+        <div className="app-main-layout">
+          <Sidebar
+            activeTab={activeNavTab}
+            onSelectTab={setActiveNavTab}
+            user={user}
+            onLogout={handleLogout}
+          />
 
-          {/* Form Content */}
-          {activeTab === 'login' ? (
-            <LoginForm onSuccess={handleAuthSuccess} />
-          ) : (
-            <RegisterForm onSuccess={handleAuthSuccess} />
-          )}
-        </main>
+          <main className="main-content-viewport">
+            {activeNavTab === 'home' && <HomeFeed user={user} />}
+            {activeNavTab === 'clips' && <MindfulClips />}
+            {activeNavTab === 'search' && <SearchPage />}
+            {activeNavTab === 'likes' && <LikesPage />}
+            {activeNavTab === 'messages' && <MessagingPage />}
+            {activeNavTab === 'profile' && <Dashboard user={user} onLogout={handleLogout} />}
+          </main>
+        </div>
       )}
     </div>
   );
