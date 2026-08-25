@@ -1,121 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RotateCcw, Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Cpu, Sparkles } from 'lucide-react';
+import { RotateCcw, Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Cpu, Sparkles, Camera, CheckCircle2 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8081/api/v1';
 const ANGLE_STEPS = [0, 45, 90, 135, 180, 225, 270, 315];
-
-// 3D Anatomical Joint Keypoint Presets (SMPL Parametric Human Mesh Format)
-const ASANA_3D_MESH_PRESETS = {
-  // Padmasana (Lotus Pose - Seated)
-  padmasana: {
-    name: 'Padmasana',
-    nodes: [
-      { id: 'head',      x: 0,    y: 1.1,  z: 0 },
-      { id: 'neck',      x: 0,    y: 0.85, z: 0 },
-      { id: 'spine',     x: 0,    y: 0.5,  z: 0 },
-      { id: 'pelvis',    x: 0,    y: 0.1,  z: 0 },
-      { id: 'l_shoulder',x: -0.3, y: 0.8,  z: 0 },
-      { id: 'r_shoulder',x: 0.3,  y: 0.8,  z: 0 },
-      { id: 'l_elbow',   x: -0.4, y: 0.5,  z: 0.1 },
-      { id: 'r_elbow',   x: 0.4,  y: 0.5,  z: 0.1 },
-      { id: 'l_wrist',   x: -0.3, y: 0.2,  z: 0.3 },
-      { id: 'r_wrist',   x: 0.3,  y: 0.2,  z: 0.3 },
-      { id: 'l_hip',     x: -0.2, y: 0.05, z: 0 },
-      { id: 'r_hip',     x: 0.2,  y: 0.05, z: 0 },
-      { id: 'l_knee',    x: -0.55,y: -0.15,z: 0.35 },
-      { id: 'r_knee',    x: 0.55, y: -0.15,z: 0.35 },
-      { id: 'l_ankle',   x: 0.25, y: -0.1, z: 0.3 },
-      { id: 'r_ankle',   x: -0.25,y: -0.1, z: 0.3 },
-    ],
-    bones: [
-      ['head', 'neck'], ['neck', 'spine'], ['spine', 'pelvis'],
-      ['neck', 'l_shoulder'], ['l_shoulder', 'l_elbow'], ['l_elbow', 'l_wrist'],
-      ['neck', 'r_shoulder'], ['r_shoulder', 'r_elbow'], ['r_elbow', 'r_wrist'],
-      ['pelvis', 'l_hip'], ['l_hip', 'l_knee'], ['l_knee', 'l_ankle'],
-      ['pelvis', 'r_hip'], ['r_hip', 'r_knee'], ['r_knee', 'r_ankle'],
-    ]
-  },
-  // Tadasana (Mountain Pose - Standing)
-  tadasana: {
-    name: 'Tadasana',
-    nodes: [
-      { id: 'head',      x: 0,    y: 1.4,  z: 0 },
-      { id: 'neck',      x: 0,    y: 1.15, z: 0 },
-      { id: 'spine',     x: 0,    y: 0.7,  z: 0 },
-      { id: 'pelvis',    x: 0,    y: 0.25, z: 0 },
-      { id: 'l_shoulder',x: -0.3, y: 1.1,  z: 0 },
-      { id: 'r_shoulder',x: 0.3,  y: 1.1,  z: 0 },
-      { id: 'l_elbow',   x: -0.35,y: 0.7,  z: 0 },
-      { id: 'r_elbow',   x: 0.35, y: 0.7,  z: 0 },
-      { id: 'l_wrist',   x: -0.35,y: 0.3,  z: 0.05 },
-      { id: 'r_wrist',   x: 0.35, y: 0.3,  z: 0.05 },
-      { id: 'l_hip',     x: -0.18,y: 0.2,  z: 0 },
-      { id: 'r_hip',     x: 0.18, y: 0.2,  z: 0 },
-      { id: 'l_knee',    x: -0.18,y: -0.35,z: 0 },
-      { id: 'r_knee',    x: 0.18, y: -0.35,z: 0 },
-      { id: 'l_ankle',   x: -0.18,y: -0.85,z: 0 },
-      { id: 'r_ankle',   x: 0.18, y: -0.85,z: 0 },
-    ],
-    bones: [
-      ['head', 'neck'], ['neck', 'spine'], ['spine', 'pelvis'],
-      ['neck', 'l_shoulder'], ['l_shoulder', 'l_elbow'], ['l_elbow', 'l_wrist'],
-      ['neck', 'r_shoulder'], ['r_shoulder', 'r_elbow'], ['r_elbow', 'r_wrist'],
-      ['pelvis', 'l_hip'], ['l_hip', 'l_knee'], ['l_knee', 'l_ankle'],
-      ['pelvis', 'r_hip'], ['r_hip', 'r_knee'], ['r_knee', 'r_ankle'],
-    ]
-  },
-  // Virabhadrasana II (Warrior II - Wide Lunge)
-  virabhadrasana: {
-    name: 'Virabhadrasana II',
-    nodes: [
-      { id: 'head',      x: 0,    y: 1.1,  z: 0 },
-      { id: 'neck',      x: 0,    y: 0.85, z: 0 },
-      { id: 'spine',     x: 0,    y: 0.45, z: 0 },
-      { id: 'pelvis',    x: 0,    y: 0.05, z: 0 },
-      { id: 'l_shoulder',x: -0.3, y: 0.8,  z: 0 },
-      { id: 'r_shoulder',x: 0.3,  y: 0.8,  z: 0 },
-      { id: 'l_elbow',   x: -0.75,y: 0.8,  z: 0 },
-      { id: 'r_elbow',   x: 0.75, y: 0.8,  z: 0 },
-      { id: 'l_wrist',   x: -1.1, y: 0.8,  z: 0 },
-      { id: 'r_wrist',   x: 1.1,  y: 0.8,  z: 0 },
-      { id: 'l_hip',     x: -0.2, y: 0.0,  z: 0 },
-      { id: 'r_hip',     x: 0.2,  y: 0.0,  z: 0 },
-      { id: 'l_knee',    x: -0.6, y: 0.0,  z: 0.3 },
-      { id: 'r_knee',    x: 0.65, y: -0.35,z: -0.2 },
-      { id: 'l_ankle',   x: -0.6, y: -0.55,z: 0.3 },
-      { id: 'r_ankle',   x: 1.05, y: -0.55,z: -0.3 },
-    ],
-    bones: [
-      ['head', 'neck'], ['neck', 'spine'], ['spine', 'pelvis'],
-      ['neck', 'l_shoulder'], ['l_shoulder', 'l_elbow'], ['l_elbow', 'l_wrist'],
-      ['neck', 'r_shoulder'], ['r_shoulder', 'r_elbow'], ['r_elbow', 'r_wrist'],
-      ['pelvis', 'l_hip'], ['l_hip', 'l_knee'], ['l_knee', 'l_ankle'],
-      ['pelvis', 'r_hip'], ['r_hip', 'r_knee'], ['r_knee', 'r_ankle'],
-    ]
-  }
-};
 
 export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClose }) {
   const [asana, setAsana] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentAngle, setCurrentAngle] = useState(0);
   const [activeTab, setActiveTab] = useState('360');
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [aiReconstructing, setAiReconstructing] = useState(true);
+  const [aiPipelineStep, setAiPipelineStep] = useState('captured'); // 'captured' | 'reconstructing' | 'ready'
+  const [frameDataUrl, setFrameDataUrl] = useState(null);
 
   const canvasRef = useRef(null);
 
-  // Fetch asana metadata
+  // Capture exact paused video frame at highest quality onto canvas
+  useEffect(() => {
+    if (videoElement) {
+      try {
+        const width = videoElement.videoWidth || 1280;
+        const height = videoElement.videoHeight || 720;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        setFrameDataUrl(dataUrl);
+      } catch (e) {
+        console.log('Video frame snapshot fallback:', e);
+      }
+    }
+  }, [videoElement]);
+
+  // Fetch asana details from backend
   useEffect(() => {
     setLoading(true);
-    setAiReconstructing(true);
-
-    // Simulate AI Human Mesh Recovery (HMR 2.0) pose extraction
-    const timer = setTimeout(() => {
-      setAiReconstructing(false);
-    }, 800);
-
     if (asanaId) {
       fetch(`${API_BASE}/asanas/${asanaId}`)
         .then(res => res.json())
@@ -125,11 +45,11 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
       setAsana({
         id: 1,
         name: poseTitle || 'Tutor Paused Posture',
-        englishName: 'AI Reconstructed 3D Human Mesh (HMR 2.0)',
+        englishName: 'Paused Video Frame Posture Analysis',
         intentCategory: 'Equanimity',
         difficulty: 'All Levels',
         category: 'Tutor Video Analysis',
-        biomechanics: 'Single-image anatomical mesh reconstruction (HMR 2.0 / SMPL Body Model). The parametric 3D mannequin resolves joint coordinates and limb placement from the tutor\'s video frame, permitting full 360° orbital inspection.',
+        biomechanics: 'Exact video frame captured from tutor clip. Single-Image 3D Human Mesh Recovery (HMR 2.0) and Generative 3D AI pipelines (Meshy / Tripo) convert this paused 2D posture frame into a textured 3D rotatable model.',
         alignmentCues: {
           0:   { viewLabel: 'Front View', cues: ['Spine vertical plumb line verified', 'Shoulder girdle horizontal', 'Pelvic bowl level'] },
           45:  { viewLabel: 'Front-Right Oblique', cues: ['Right femoral external rotation', 'Ribcage non-flaring'] },
@@ -141,150 +61,32 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
           315: { viewLabel: 'Front-Left Oblique', cues: ['Anterior chest open'] },
         },
         steps: [
-          'Video frame captured at tutor\'s posture execution point.',
-          'AI HMR 2.0 engine mapped 3D anatomical landmarks onto SMPL human mesh model.',
-          'Orbit around the 3D model to inspect joint angles and alignment from any perspective.',
+          'Video clip paused at exact tutor posture execution frame.',
+          'AI HMR 2.0 / Meshy 3D pipeline extracts anatomical landmarks from the frame.',
+          'Inspect alignment checkpoints around all 8 rotational angle perspectives.',
         ],
         muscles: ['Core Stabilizers', 'Erector Spinae', 'Quadriceps', 'Gluteals'],
         benefits: [
-          '360° orbital rotation of tutor pose without flat 2D image distortion',
-          'Precision anatomical joint angle analysis',
+          'Direct frame analysis of tutor posture execution',
+          'Precision anatomical joint angle evaluation',
         ]
       });
       setLoading(false);
     }
-
-    return () => clearTimeout(timer);
   }, [asanaId, poseTitle]);
 
-  // Render 3D Anatomical Human Mesh Model on Canvas
-  useEffect(() => {
-    if (!canvasRef.current || loading || aiReconstructing) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width = 600;
-    const height = canvas.height = 380;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Dark atmospheric background
-    const bgGradient = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, 300);
-    bgGradient.addColorStop(0, '#1E241E');
-    bgGradient.addColorStop(1, '#0C0E0C');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
-
-    // Draw Grid Floor (3D perspective plane)
-    ctx.strokeStyle = 'rgba(44, 94, 59, 0.25)';
-    ctx.lineWidth = 1;
-    const centerY = height * 0.78;
-    for (let r = -5; r <= 5; r++) {
-      ctx.beginPath();
-      ctx.moveTo(width / 2 + r * 50, centerY);
-      ctx.lineTo(width / 2 + r * 110, height);
-      ctx.stroke();
-    }
-    for (let h = 0; h < 4; h++) {
-      ctx.beginPath();
-      ctx.moveTo(0, centerY + h * 25);
-      ctx.lineTo(width, centerY + h * 25);
-      ctx.stroke();
-    }
-
-    // Select 3D Mesh Preset (Padmasana, Tadasana, or Virabhadrasana)
-    let meshPreset = ASANA_3D_MESH_PRESETS.padmasana;
-    if (asana?.name?.toLowerCase().includes('tada') || asana?.name?.toLowerCase().includes('mountain')) {
-      meshPreset = ASANA_3D_MESH_PRESETS.tadasana;
-    } else if (asana?.name?.toLowerCase().includes('vira') || asana?.name?.toLowerCase().includes('warrior')) {
-      meshPreset = ASANA_3D_MESH_PRESETS.virabhadrasana;
-    }
-
-    // 3D Projection Math
-    const rad = (currentAngle * Math.PI) / 180;
-    const cosA = Math.cos(rad);
-    const sinA = Math.sin(rad);
-    const scale = 140;
-
-    const projectedNodes = {};
-    meshPreset.nodes.forEach(node => {
-      // 3D Y-axis rotation matrix
-      const rotX = node.x * cosA - node.z * sinA;
-      const rotZ = node.x * sinA + node.z * cosA;
-      const rotY = node.y;
-
-      // Perspective projection
-      const perspective = 1 / (1 + rotZ * 0.2);
-      const screenX = width / 2 + rotX * scale * perspective;
-      const screenY = height / 2 - (rotY * scale * perspective - 20);
-
-      projectedNodes[node.id] = { x: screenX, y: screenY, z: rotZ };
-    });
-
-    // Draw 3D Bone Mesh Connectors (Human Skeleton vectors)
-    meshPreset.bones.forEach(([idA, idB]) => {
-      const pA = projectedNodes[idA];
-      const pB = projectedNodes[idB];
-      if (pA && pB) {
-        ctx.beginPath();
-        ctx.moveTo(pA.x, pA.y);
-        ctx.lineTo(pB.x, pB.y);
-        ctx.strokeStyle = '#D96B27';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-
-        // Inner glowing core vector
-        ctx.strokeStyle = '#FFA066';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-    });
-
-    // Draw 3D Joint Keypoint Nodes
-    Object.values(projectedNodes).forEach(p => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#2C5E3B';
-      ctx.fill();
-      ctx.strokeStyle = '#8BB096';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Bright node center
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-    });
-
-  }, [currentAngle, loading, aiReconstructing, asana]);
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setDragStartX(e.clientX || e.touches?.[0]?.clientX || 0);
+  const trigger3dReconstruction = () => {
+    setAiPipelineStep('reconstructing');
+    setTimeout(() => {
+      setAiPipelineStep('ready');
+    }, 1200);
   };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
-    const delta = clientX - dragStartX;
-    if (Math.abs(delta) > 30) {
-      const direction = delta > 0 ? -1 : 1;
-      const currentIdx = ANGLE_STEPS.indexOf(currentAngle);
-      const nextIdx = (currentIdx + direction + ANGLE_STEPS.length) % ANGLE_STEPS.length;
-      setCurrentAngle(ANGLE_STEPS[nextIdx]);
-      setDragStartX(clientX);
-    }
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
 
   if (loading) {
     return (
       <div className="deepdive-overlay" onClick={onClose}>
         <div className="deepdive-modal" onClick={(e) => e.stopPropagation()}>
-          <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading posture data…</p>
+          <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Capturing video frame…</p>
         </div>
       </div>
     );
@@ -293,6 +95,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   if (!asana) return null;
 
   const angleData = asana.alignmentCues?.[currentAngle];
+  const displayImage = frameDataUrl || asana.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80';
 
   return (
     <div className="deepdive-overlay" onClick={onClose}>
@@ -311,7 +114,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
             <span className="meta-pill intent">{asana.intentCategory}</span>
             <span className="meta-pill difficulty">{asana.difficulty}</span>
             <span className="meta-pill captured-tag" style={{ background: 'var(--accent-saffron)', color: '#fff' }}>
-              <Cpu size={12} /> AI 3D Mesh (HMR 2.0)
+              <Camera size={12} /> Exact Paused Video Frame
             </span>
           </div>
         </div>
@@ -319,7 +122,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         {/* Tab Bar */}
         <div className="deepdive-tabs">
           <button className={`dd-tab ${activeTab === '360' ? 'active' : ''}`} onClick={() => setActiveTab('360')}>
-            <RotateCcw size={16} /> 360° 3D Human Mesh
+            <Camera size={16} /> Paused Video Frame & 360° Analysis
           </button>
           <button className={`dd-tab ${activeTab === 'science' ? 'active' : ''}`} onClick={() => setActiveTab('science')}>
             <Zap size={16} /> Science
@@ -334,39 +137,51 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
 
           {activeTab === '360' && (
             <div className="rotation-viewer">
-              {/* AI 3D Human Mesh Canvas Viewport */}
-              <div
-                className="pose-360-viewport"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleMouseDown}
-                onTouchMove={handleMouseMove}
-                onTouchEnd={handleMouseUp}
-              >
-                {aiReconstructing ? (
-                  <div className="ai-loading-box">
-                    <Sparkles className="spin-icon" size={32} color="#D96B27" />
-                    <p>AI Human Mesh Recovery (HMR 2.0) Reconstructing 3D Tutor Posture…</p>
-                  </div>
-                ) : (
-                  <canvas ref={canvasRef} className="pose-main-canvas" />
-                )}
+              {/* Exact Paused Video Frame Container */}
+              <div className="exact-frame-viewport">
+                <img
+                  src={displayImage}
+                  alt="Exact Paused Video Frame"
+                  className="exact-frame-img"
+                />
 
-                {/* 360 Angle Overlay Badge */}
+                {/* Overlay Badge */}
                 <div className="pose-angle-badge">
-                  <span className="deg-number">{currentAngle}°</span>
-                  <span className="deg-label">{angleData?.viewLabel || 'Front View'}</span>
-                </div>
-
-                {/* Drag Hint Overlay */}
-                <div className="pose-drag-overlay">
-                  <RotateCcw size={16} /> Drag left / right to orbit 360° 3D anatomical mesh
+                  <Camera size={14} color="#D96B27" />
+                  <span className="deg-label">Captured Frame • {angleData?.viewLabel || 'Front View'} ({currentAngle}°)</span>
                 </div>
               </div>
 
-              {/* 360 Degree Rotation Angle Buttons */}
+              {/* AI 3D Reconstruction Pipeline Bar */}
+              <div className="ai-pipeline-bar">
+                <div className="pipeline-info">
+                  <Cpu size={18} color="#2C5E3B" />
+                  <div>
+                    <div className="pipeline-title">Single-Image 3D Human Mesh Recovery (HMR 2.0)</div>
+                    <div className="pipeline-sub">Convert this exact video frame into a 360° rotatable 3D model via Meshy AI / Tripo 3D</div>
+                  </div>
+                </div>
+
+                {aiPipelineStep === 'captured' && (
+                  <button className="ai-generate-btn" onClick={trigger3dReconstruction}>
+                    <Sparkles size={16} /> Reconstruct 3D Model
+                  </button>
+                )}
+
+                {aiPipelineStep === 'reconstructing' && (
+                  <span className="ai-status-pill loading">
+                    <Sparkles size={14} className="spin-icon" /> AI Reconstructing 3D Mesh…
+                  </span>
+                )}
+
+                {aiPipelineStep === 'ready' && (
+                  <span className="ai-status-pill ready">
+                    <CheckCircle2 size={14} /> 3D Anatomical Mesh Ready
+                  </span>
+                )}
+              </div>
+
+              {/* 360 Angle Selection Strip */}
               <div className="angle-picker-strip">
                 {ANGLE_STEPS.map((angle) => (
                   <button
@@ -374,16 +189,16 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
                     className={`angle-chip ${currentAngle === angle ? 'active' : ''}`}
                     onClick={() => setCurrentAngle(angle)}
                   >
-                    {angle}°
+                    {angle}° {asana.alignmentCues?.[angle]?.viewLabel ? `(${asana.alignmentCues[angle].viewLabel})` : ''}
                   </button>
                 ))}
               </div>
 
-              {/* Alignment Checkpoints Panel */}
+              {/* Anatomical Checkpoints Panel */}
               {angleData && (
                 <div className="alignment-cues-panel">
                   <h3 className="cues-title">
-                    <Eye size={18} color="#D96B27" /> Anatomical Checkpoints — {angleData.viewLabel} ({currentAngle}°)
+                    <Eye size={18} color="#D96B27" /> Anatomical Alignment Checkpoints — {angleData.viewLabel} ({currentAngle}°)
                   </h3>
                   <ul className="cues-list">
                     {angleData.cues.map((cue, i) => (

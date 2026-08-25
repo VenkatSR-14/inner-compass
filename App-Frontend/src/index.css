@@ -2225,4 +2225,104 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* ══════════════════════════════════════════════════════
+   EXACT PAUSED VIDEO FRAME VIEWPORT & AI PIPELINE BAR
+   ══════════════════════════════════════════════════════ */
+
+.exact-frame-viewport {
+  position: relative;
+  width: 100%;
+  max-height: 420px;
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-cream);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.exact-frame-img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: #000;
+}
+
+.ai-pipeline-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.35rem;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-green);
+  border-radius: var(--radius-md);
+  gap: 1rem;
+}
+
+.pipeline-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pipeline-title {
+  font-family: var(--font-family-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.pipeline-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.ai-generate-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(135deg, var(--accent-saffron) 0%, var(--accent-saffron-hover) 100%);
+  color: #FFFFFF;
+  font-family: var(--font-family-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(217, 107, 39, 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ai-generate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(217, 107, 39, 0.4);
+}
+
+.ai-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 100px;
+  font-family: var(--font-family-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ai-status-pill.loading {
+  background: var(--accent-saffron-light);
+  color: var(--accent-saffron);
+}
+
+.ai-status-pill.ready {
+  background: var(--accent-green-light);
+  color: var(--accent-green);
+}
+
+
 
