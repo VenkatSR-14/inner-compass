@@ -4,6 +4,13 @@ import AsanaDeepDive from './AsanaDeepDive';
 
 const API_BASE = 'http://localhost:8081/api/v1';
 
+// High quality default imagery map for classes and search items
+const DEFAULT_CLASS_IMAGES = {
+  'Morning Equanimity Flow': 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
+  'Somatic Strength & Grounding': 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80',
+  'Rational Clarity Workshop': 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80',
+};
+
 export default function SearchPage() {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
@@ -13,7 +20,6 @@ export default function SearchPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch from backend
   useEffect(() => {
     setLoading(true);
     const fetchData = async () => {
@@ -35,7 +41,6 @@ export default function SearchPage() {
     fetchData();
   }, []);
 
-  // Search backend when query changes (debounced via local filter for now)
   const filteredAsanas = asanas.filter(a => {
     if (query === '') return true;
     const q = query.toLowerCase();
@@ -92,54 +97,74 @@ export default function SearchPage() {
       {/* Loading State */}
       {loading && (
         <div className="search-empty-state">
-          <p>Loading…</p>
+          <p>Loading asana catalog and online classes…</p>
         </div>
       )}
 
-      {/* Results */}
-      <div className="search-results-list">
+      {/* Grid Results with Posture Images */}
+      <div className="search-results-grid">
         {!loading && filteredAsanas.length === 0 && filteredClasses.length === 0 && (
-          <div className="search-empty-state">
+          <div className="search-empty-state" style={{ gridColumn: '1 / -1' }}>
             <Search size={40} color="#E4DCD0" />
             <p>No results found. Try a different search term.</p>
           </div>
         )}
 
-        {/* Asana Results */}
+        {/* Asana Cards with Posture Images */}
         {showAsanas && filteredAsanas.map((asana) => (
-          <div key={`asana-${asana.id}`} className="search-result-card">
-            <div className="result-top-row">
-              <div className="result-type-badge"><RotateCcw size={16} color="#D96B27" /> {asana.category}</div>
-              <span className="result-intent-pill">{asana.intentCategory}</span>
+          <div key={`asana-${asana.id}`} className="search-card-with-image">
+            <div className="card-image-wrapper">
+              <img
+                src={asana.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80'}
+                alt={asana.name}
+                className="card-posture-img"
+              />
+              <span className="card-intent-badge">{asana.intentCategory}</span>
             </div>
-            <h3 className="result-title">{asana.name} — {asana.englishName}</h3>
-            <div className="result-footer">
-              <span className="result-difficulty">{asana.difficulty}</span>
-              <button
-                className="deepdive-trigger-btn"
-                onClick={() => setDeepDiveAsanaId(asana.id)}
-              >
-                <Eye size={16} /> 360° Deep-Dive
-              </button>
+            <div className="card-body">
+              <div className="result-type-badge">
+                <RotateCcw size={14} color="#D96B27" /> {asana.category}
+              </div>
+              <h3 className="card-title">{asana.name}</h3>
+              <span className="card-subtitle">{asana.englishName}</span>
+
+              <div className="card-footer">
+                <span className="result-difficulty">{asana.difficulty}</span>
+                <button
+                  className="deepdive-trigger-btn"
+                  onClick={() => setDeepDiveAsanaId(asana.id)}
+                >
+                  <Eye size={15} /> 360° Deep-Dive
+                </button>
+              </div>
             </div>
           </div>
         ))}
 
-        {/* Class Results */}
+        {/* Class Cards with Images */}
         {showClasses && filteredClasses.map((cls) => (
-          <div key={`class-${cls.id}`} className="search-result-card">
-            <div className="result-top-row">
-              <div className="result-type-badge"><Video size={16} color="#2C5E3B" /> {cls.category}</div>
-              <span className="result-intent-pill">{cls.intentCategory}</span>
+          <div key={`class-${cls.id}`} className="search-card-with-image">
+            <div className="card-image-wrapper">
+              <img
+                src={DEFAULT_CLASS_IMAGES[cls.title] || 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80'}
+                alt={cls.title}
+                className="card-posture-img"
+              />
+              <span className="card-intent-badge">{cls.intentCategory}</span>
             </div>
-            <h3 className="result-title">{cls.title}</h3>
-            <p className="result-desc">{cls.description}</p>
-            <div className="result-class-meta">
-              <span><Users size={14} /> {cls.instructorName}</span>
-              <span>{cls.schedule}</span>
-            </div>
-            <div className="result-footer">
-              <span className="result-difficulty">{cls.difficulty}</span>
+            <div className="card-body">
+              <div className="result-type-badge">
+                <Video size={14} color="#2C5E3B" /> {cls.category}
+              </div>
+              <h3 className="card-title">{cls.title}</h3>
+              <p className="card-desc">{cls.description}</p>
+              <div className="result-class-meta">
+                <span><Users size={14} /> {cls.instructorName}</span>
+                <span>{cls.schedule}</span>
+              </div>
+              <div className="card-footer">
+                <span className="result-difficulty">{cls.difficulty}</span>
+              </div>
             </div>
           </div>
         ))}
