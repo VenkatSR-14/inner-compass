@@ -7,7 +7,7 @@ const SAMPLE_CLIPS = [
     id: 1,
     title: 'Anchoring Breath in Equanimity',
     description: 'A 30-second somatic breathing calibration before your morning practice.',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4',
+    videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 30,
     intentCategory: 'Equanimity',
@@ -20,7 +20,7 @@ const SAMPLE_CLIPS = [
     id: 2,
     title: 'Cognitive Context: The Rational Mind',
     description: 'Understanding the connection between logic and breath control in classical posture.',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-sun-shining-through-the-trees-1189-large.mp4',
+    videoUrl: 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 45,
     intentCategory: 'Clarity',
@@ -33,7 +33,7 @@ const SAMPLE_CLIPS = [
     id: 3,
     title: 'Somatic Grounding Alignment',
     description: 'Calibrating pelvic floor alignment for seated meditation.',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-top-view-of-forest-trees-1224-large.mp4',
+    videoUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 25,
     intentCategory: 'Somatic Grounding',
@@ -99,7 +99,6 @@ export default function MindfulClips() {
       videoRef.current.pause();
       setIsPlaying(false);
 
-      // Attempt to capture HTML5 video frame onto canvas
       try {
         const video = videoRef.current;
         const canvas = document.createElement('canvas');
@@ -110,7 +109,6 @@ export default function MindfulClips() {
         const dataUrl = canvas.toDataURL('image/jpeg');
         setCapturedFrameData(dataUrl);
       } catch (err) {
-        // Fallback to active clip thumbnail or poster image if cross-origin canvas is blocked
         setCapturedFrameData(activeClip.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80');
       }
     }
@@ -145,19 +143,17 @@ export default function MindfulClips() {
             ref={videoRef}
             key={activeClip.videoUrl}
             src={activeClip.videoUrl}
+            poster={activeClip.thumbnailUrl}
             className="reel-video-element"
-            autoPlay={isPlaying}
+            autoPlay
             loop
             muted={isMuted}
-            onClick={() => {
-              if (isPlaying) {
-                videoRef.current.pause();
-                setIsPlaying(false);
-              } else {
-                videoRef.current.play();
-                setIsPlaying(true);
-              }
-            }}
+            playsInline
+            controls
+            preload="auto"
+            crossOrigin="anonymous"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
           />
 
           {/* Top Duration Constraint Tag */}
