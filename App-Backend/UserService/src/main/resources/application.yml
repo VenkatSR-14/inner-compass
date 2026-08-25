@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inner_compass_db?currentSchema=user_schema
+    username: sraghavanvenkat
+    password: Venk@t1998
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        default_schema: user_schema
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  threads:
+    virtual:
+      enabled: true

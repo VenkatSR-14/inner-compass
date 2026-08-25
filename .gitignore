@@ -1,0 +1,24 @@
+# Target folders (Maven builds)
+target/
+**/target/
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+*.settings/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Logs and Environment variables
+*.log
+.env
+.env.local
+
+# Temp files
+*.tmp
+*.bak
