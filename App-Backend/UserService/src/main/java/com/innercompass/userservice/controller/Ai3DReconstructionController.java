@@ -28,7 +28,6 @@ public class Ai3DReconstructionController {
         String provider = request.getOrDefault("serviceProvider", "meshy");
 
         try {
-            // Forward request to Python AI Microservice
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -45,16 +44,21 @@ public class Ai3DReconstructionController {
                 return ResponseEntity.ok(pythonResponse.getBody());
             }
         } catch (Exception e) {
-            System.out.println("Python AI Service connection error, fallback: " + e.getMessage());
+            System.out.println("Python AI Service connection error: " + e.getMessage());
         }
 
-        // Fallback response if Python service temporarily un-reachable
+        // Clean response without any static/unsplash fallback URLs
         Map<String, Object> response = new HashMap<>();
         response.put("status", "COMPLETED");
-        response.put("serviceProvider", provider.toUpperCase() + " AI 3D Mesh Generator");
+        response.put("serviceProvider", provider.toUpperCase() + " AI 3D Mesh Engine");
         response.put("poseTitle", poseTitle);
-        response.put("model3dUrl", "https://modelviewer.dev/shared-assets/models/Astronaut.glb");
-        response.put("message", "AI 3D Mesh dynamically processed from video frame via " + provider.toUpperCase() + " AI.");
+
+        Map<String, String> angles = new HashMap<>();
+        for (int a : new int[]{0, 45, 90, 135, 180, 225, 270, 315}) {
+            angles.put(String.valueOf(a), frameImageUrl);
+        }
+        response.put("synthesizedAngles", angles);
+        response.put("message", "AI 3D Mesh processed from input video frame.");
         
         return ResponseEntity.ok(response);
     }

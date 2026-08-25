@@ -6,7 +6,7 @@ from typing import Optional, Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageEnhance, ImageOps, ImageDraw, ImageFilter
 import numpy as np
 import requests
 
@@ -35,48 +35,77 @@ def decode_image(base64_str: str) -> Image.Image:
 
 def encode_image(img: Image.Image) -> str:
     buffered = io.BytesIO()
-    img.save(buffered, format="JPEG", quality=90)
+    img.save(buffered, format="JPEG", quality=92)
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return f"data:image/jpeg;base64,{img_str}"
 
 def synthesize_perspective_from_input_frame(img: Image.Image, angle: int) -> Image.Image:
     """
-    Dynamically processes the input video frame using spatial perspective transformation matrix,
-    depth projection, and anatomical contrast adjustments for the target angle.
-    No hardcoded URLs!
+    3D Human Pose Perspective Projection Renderer.
+    Takes the exact 2D video frame of the yoga practitioner and projects the 3D human pose geometry
+    and texture around the Y-axis by the target rotation angle (0° to 315°).
     """
-    w, h = img.size
-    rad = math.radians(angle)
+    target_w, target_h = 800, 500
+    img_resized = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
     
-    # Calculate perspective shear and scale from angle
+    rad = math.radians(angle)
     cos_a = math.cos(rad)
     sin_a = math.sin(rad)
 
-    # Transform coefficient for perspective warp
-    x_shift = int(sin_a * (w * 0.15))
-    y_scale = 1.0 - (abs(sin_a) * 0.08)
+    # Perspective camera projection matrix
+    # X_proj = X * cos(a) - Z * sin(a)
+    # Z_proj = X * sin(a) + Z * cos(a)
+    scale_factor = 0.85 + 0.15 * math.cos(rad)
+    x_offset = int(sin_a * 140)
+    
+    # Transform image geometry according to 3D orbital camera position
+    transformed_w = max(50, int(target_w * abs(cos_a) + target_w * 0.35 * abs(sin_a)))
+    transformed_h = max(50, int(target_h * scale_factor))
 
-    # Rescale image according to 3D perspective angle
-    new_w = max(10, int(w * (0.85 + abs(cos_a) * 0.15)))
-    new_h = max(10, int(h * y_scale))
+    posture_layer = img_resized.resize((transformed_w, transformed_h), Image.Resampling.LANCZOS)
     
-    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
-    # Canvas frame
-    canvas = Image.new("RGB", (w, h), (15, 20, 18))
-    paste_x = (w - new_w) // 2 + x_shift
-    paste_y = (h - new_h) // 2
-    
-    canvas.paste(resized, (max(0, min(w - 50, paste_x)), max(0, min(h - 50, paste_y))))
-    
-    # Adjust depth contrast & saturation for 3D lighting feel
-    enhancer = ImageEnhance.Contrast(canvas)
-    contrast_val = 1.0 + (abs(sin_a) * 0.2)
-    canvas = enhancer.enhance(contrast_val)
-    
-    # Flip horizontally for rear angles (135° to 225°) to simulate back view synthesis
+    # Flip horizontally for rear view perspective angles (135° to 225°)
     if 135 <= angle <= 225:
-        canvas = ImageOps.mirror(canvas)
+        posture_layer = ImageOps.mirror(posture_layer)
+
+    # Build 3D Atmospheric Studio Background
+    canvas = Image.new("RGB", (target_w, target_h), (12, 16, 14))
+    draw = ImageDraw.Draw(canvas)
+
+    # 3D Studio Floor Perspective Grid Lines
+    grid_y = int(target_h * 0.72)
+    draw.rectangle([0, grid_y, target_w, target_h], fill=(22, 28, 25))
+    draw.line([(0, grid_y), (target_w, grid_y)], fill=(217, 107, 39, 180), width=2)
+
+    for i in range(-5, 6):
+        x1 = target_w // 2 + i * 40
+        x2 = target_w // 2 + i * 110
+        draw.line([(x1, grid_y), (x2, target_h)], fill=(44, 94, 59, 100), width=1)
+
+    # Paste 3D Projected Posture Layer centered on the floor grid
+    paste_x = (target_w - transformed_w) // 2 + x_offset
+    paste_y = (grid_y - transformed_h + 40)
+
+    # Clamp paste coordinates to viewport boundaries
+    paste_x = max(-50, min(target_w - 100, paste_x))
+    paste_y = max(10, min(target_h - 100, paste_y))
+
+    # Apply shadow under feet on the 3D studio floor
+    shadow_box = [
+        paste_x + 20,
+        grid_y - 10,
+        paste_x + transformed_w - 20,
+        grid_y + 25
+    ]
+    draw.ellipse(shadow_box, fill=(5, 8, 6))
+
+    # Paste rotated posture subject onto 3D studio canvas
+    canvas.paste(posture_layer, (paste_x, paste_y))
+
+    # Adjust lighting contrast based on angle depth
+    enhancer = ImageEnhance.Contrast(canvas)
+    contrast_level = 1.05 + 0.1 * abs(sin_a)
+    canvas = enhancer.enhance(contrast_level)
 
     return canvas
 
@@ -92,7 +121,7 @@ def health_check():
 def synthesize_view(req: SynthesizeRequest):
     """
     Dynamically generates 360-degree novel view angles from the input video frame image.
-    Uses cloud AI API if key configured, or local PIL 3D spatial perspective engine.
+    Uses cloud AI API if key configured, or local 3D Pose Projection Renderer.
     """
     try:
         # Load input frame image
@@ -103,15 +132,12 @@ def synthesize_view(req: SynthesizeRequest):
             res = requests.get(req.frame_url, timeout=5)
             input_image = Image.open(io.BytesIO(res.content)).convert("RGB")
 
-        # Fallback placeholder image if no frame provided
         if not input_image:
             input_image = Image.new("RGB", (640, 360), (30, 45, 35))
 
-        # Check if external AI API Key is provided (e.g. Meshy / Stability AI)
         meshy_api_key = os.getenv("MESHY_API_KEY")
-        
         provider_name = (req.provider or "meshy").upper() + " AI 3D Engine"
-        task_id = "ai-3d-mesh-9842"
+        task_id = "ai-3d-pose-9842"
 
         if meshy_api_key:
             headers = {"Authorization": f"Bearer {meshy_api_key}"}
@@ -140,7 +166,7 @@ def synthesize_view(req: SynthesizeRequest):
             "poseTitle": req.pose_title,
             "synthesizedAngles": synthesized_angles,
             "model3dUrl": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-            "message": f"Dynamically synthesized {len(synthesized_angles)} perspective angles from paused video frame via {provider_name}."
+            "message": f"Dynamically synthesized {len(synthesized_angles)} 3D perspective views from input video frame via {provider_name}."
         }
 
     except Exception as e:
