@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS content_schema.short_videos (
 CREATE INDEX IF NOT EXISTS idx_short_videos_intent ON content_schema.short_videos(intent_category);
 CREATE INDEX IF NOT EXISTS idx_short_videos_created_at ON content_schema.short_videos(created_at DESC);
 
--- Clear and update initial Mindful Clips with authentic open-access yoga tutor videos
+-- Clear and update initial Mindful Clips with authentic Creative Commons Yoga Tutor videos
 TRUNCATE TABLE content_schema.short_videos RESTART IDENTITY CASCADE;
 
 INSERT INTO content_schema.short_videos (title, description, video_url, thumbnail_url, duration_seconds, intent_category, author_id, author_name, likes_count, views_count)
 VALUES 
-('Padmasana Seated Breath Calibration', 'Yoga tutor demonstrating seated lotus breath calibration and spine verticality.', 'https://vjs.zencdn.net/v/oceans.mp4', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Swami Veda', 142, 1205),
-('Tadasana Postural Plumb Line', 'Yoga tutor alignment breakdown for standing posture and pelvic neutrality.', 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Dr. Aris Thorne', 98, 840),
-('Virabhadrasana II Isometric Hold', 'Yoga tutor demonstrating Warrior II wide lunge, hip external rotation, and Drishti gaze.', 'https://media.w3.org/2010/05/bunny/trailer.mp4', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Elena Rostova', 215, 1940);
+('Vrikshasana Balance & Alignment', 'Yoga tutor demonstrating Vrikshasana (Tree Pose) single-leg stability, pelvic leveling, and breath anchoring.', 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Yoga_with_Modi%E2%80%94Vrikshasana_%28English%29.webm', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Yoga Tutor Guide', 142, 1205),
+('Tadasana Standing Plumb Line', 'Yoga tutor demonstrating Tadasana (Mountain Pose) vertical alignment and weight distribution.', 'https://upload.wikimedia.org/wikipedia/commons/5/50/Yoga_with_Modi%E2%80%94Tadasana_%28English%29.webm', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Yoga Tutor Guide', 98, 840),
+('Trikonasana Lateral Alignment', 'Yoga tutor demonstrating Trikonasana (Triangle Pose) pelvic angle and spinal extension.', 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Yoga_with_Modi%E2%80%94Trikonasana_%28English%29.webm', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Yoga Tutor Guide', 215, 1940);
