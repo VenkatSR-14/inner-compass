@@ -53,7 +53,7 @@ export default function MindfulClips() {
 
   // Deep dive state
   const [deepDiveActive, setDeepDiveActive] = useState(false);
-  const [capturedFrameData, setCapturedFrameData] = useState(null);
+  const [targetVideoEl, setTargetVideoEl] = useState(null);
 
   const videoRef = useRef(null);
 
@@ -93,24 +93,12 @@ export default function MindfulClips() {
     if (currentIdx > 0) setCurrentIdx(currentIdx - 1);
   };
 
-  // Pause video and capture frame screenshot for 360° pose deep dive
+  // Pause video and pass active video element to 360° Deep-Dive modal
   const handlePauseAndSpin360 = () => {
     if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
-
-      try {
-        const video = videoRef.current;
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 360;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        setCapturedFrameData(dataUrl);
-      } catch (err) {
-        setCapturedFrameData(activeClip.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80');
-      }
+      setTargetVideoEl(videoRef.current);
     }
     setDeepDiveActive(true);
   };
@@ -208,11 +196,11 @@ export default function MindfulClips() {
         </div>
       </div>
 
-      {/* 360° Pose Deep Dive Modal from Paused Clip */}
+      {/* 360° Pose Deep Dive Modal from Paused Clip Video Element */}
       {deepDiveActive && (
         <AsanaDeepDive
           asanaId={activeClip.asanaId || 1}
-          capturedFrameImage={capturedFrameData}
+          videoElement={targetVideoEl}
           poseTitle={activeClip.title}
           onClose={() => setDeepDiveActive(false)}
         />

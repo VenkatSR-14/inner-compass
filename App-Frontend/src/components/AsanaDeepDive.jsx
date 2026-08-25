@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RotateCcw, Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Camera } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8081/api/v1';
@@ -6,7 +6,6 @@ const ANGLE_STEPS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 // High quality perspective images for 360° rotation of postures
 const POSE_PERSPECTIVE_IMAGES = {
-  // Padmasana (Lotus)
   1: {
     0:   'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
     45:  'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
@@ -17,7 +16,6 @@ const POSE_PERSPECTIVE_IMAGES = {
     270: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
     315: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
   },
-  // Tadasana (Mountain)
   2: {
     0:   'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
     45:  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
@@ -28,7 +26,6 @@ const POSE_PERSPECTIVE_IMAGES = {
     270: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
     315: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
   },
-  // Virabhadrasana II (Warrior II)
   3: {
     0:   'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80',
     45:  'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
@@ -41,7 +38,7 @@ const POSE_PERSPECTIVE_IMAGES = {
   },
 };
 
-export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, onClose }) {
+export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClose }) {
   const [asana, setAsana] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentAngle, setCurrentAngle] = useState(0);
@@ -49,16 +46,33 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
 
+  const canvasRef = useRef(null);
+
+  // Render direct video frame onto HTML5 canvas
+  useEffect(() => {
+    if (videoElement && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const width = videoElement.videoWidth || 640;
+      const height = videoElement.videoHeight || 360;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      try {
+        ctx.drawImage(videoElement, 0, 0, width, height);
+      } catch (e) {
+        console.log('Video frame draw fallback:', e);
+      }
+    }
+  }, [videoElement, currentAngle, activeTab]);
+
   useEffect(() => {
     setLoading(true);
-    // If an ID is provided, fetch details from backend
     if (asanaId) {
       fetch(`${API_BASE}/asanas/${asanaId}`)
         .then(res => res.json())
         .then(data => { setAsana(data); setLoading(false); })
         .catch(() => setLoading(false));
     } else {
-      // Default fallback for captured video frame pose
       setAsana({
         id: 1,
         name: poseTitle || 'Captured Video Pose',
@@ -67,7 +81,6 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
         difficulty: 'All Levels',
         category: 'Short Video Frame',
         biomechanics: 'Single-image anatomical mesh reconstruction from video frame. Grounding alignment and postural balance evaluated from paused video position.',
-        thumbnailUrl: capturedFrameImage,
         alignmentCues: {
           0:   { viewLabel: 'Front View', cues: ['Spine vertical, crown lifting', 'Shoulders level over hips', 'Core engaged'] },
           45:  { viewLabel: 'Front-Right Oblique', cues: ['Hip external rotation verified', 'Right shoulder aligned'] },
@@ -91,7 +104,7 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
       });
       setLoading(false);
     }
-  }, [asanaId, capturedFrameImage, poseTitle]);
+  }, [asanaId, poseTitle]);
 
   if (loading) {
     return (
@@ -106,12 +119,7 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
   if (!asana) return null;
 
   const angleData = asana.alignmentCues?.[currentAngle];
-
-  // Resolve current angle image: captured frame > asana perspective image > thumbnail
-  const currentAngleImage = capturedFrameImage ||
-    POSE_PERSPECTIVE_IMAGES[asana.id]?.[currentAngle] ||
-    asana.thumbnailUrl ||
-    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80';
+  const perspectiveImage = POSE_PERSPECTIVE_IMAGES[asana.id]?.[currentAngle] || asana.thumbnailUrl;
 
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -133,16 +141,6 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const rotateLeft = () => {
-    const idx = ANGLE_STEPS.indexOf(currentAngle);
-    setCurrentAngle(ANGLE_STEPS[(idx - 1 + ANGLE_STEPS.length) % ANGLE_STEPS.length]);
-  };
-
-  const rotateRight = () => {
-    const idx = ANGLE_STEPS.indexOf(currentAngle);
-    setCurrentAngle(ANGLE_STEPS[(idx + 1) % ANGLE_STEPS.length]);
-  };
-
   return (
     <div className="deepdive-overlay" onClick={onClose}>
       <div className="deepdive-modal" onClick={(e) => e.stopPropagation()}>
@@ -159,9 +157,9 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
           <div className="deepdive-meta-pills">
             <span className="meta-pill intent">{asana.intentCategory}</span>
             <span className="meta-pill difficulty">{asana.difficulty}</span>
-            {capturedFrameImage && (
+            {videoElement && (
               <span className="meta-pill captured-tag" style={{ background: 'var(--accent-saffron)', color: '#fff' }}>
-                <Camera size={12} /> Paused Clip Frame
+                <Camera size={12} /> Paused Video Frame Captured
               </span>
             )}
           </div>
@@ -185,7 +183,7 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
 
           {activeTab === '360' && (
             <div className="rotation-viewer">
-              {/* 360° Interactive Pose Image Canvas */}
+              {/* 360° Interactive Pose Canvas Viewport */}
               <div
                 className="pose-360-viewport"
                 onMouseDown={handleMouseDown}
@@ -196,16 +194,27 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
                 onTouchMove={handleMouseMove}
                 onTouchEnd={handleMouseUp}
               >
-                {/* Real Pose Image derived from frame or perspective */}
-                <img
-                  src={currentAngleImage}
-                  alt={`${asana.name} - ${currentAngle}° view`}
-                  className="pose-main-image"
-                  style={{
-                    transform: `perspective(800px) rotateY(${currentAngle > 180 ? currentAngle - 360 : currentAngle}deg)`,
-                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
+                {/* Rendering Video Frame Canvas or Perspective Image */}
+                {videoElement ? (
+                  <canvas
+                    ref={canvasRef}
+                    className="pose-main-image"
+                    style={{
+                      transform: `perspective(800px) rotateY(${currentAngle > 180 ? currentAngle - 360 : currentAngle}deg)`,
+                      transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={perspectiveImage || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80'}
+                    alt={`${asana.name} - ${currentAngle}° view`}
+                    className="pose-main-image"
+                    style={{
+                      transform: `perspective(800px) rotateY(${currentAngle > 180 ? currentAngle - 360 : currentAngle}deg)`,
+                      transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  />
+                )}
 
                 {/* 360 Angle Overlay Badge */}
                 <div className="pose-angle-badge">
@@ -215,7 +224,7 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
 
                 {/* Drag Hint Overlay */}
                 <div className="pose-drag-overlay">
-                  <RotateCcw size={16} /> Drag left / right to orbit 360° pose
+                  <RotateCcw size={16} /> Drag left / right to orbit 360° pose frame
                 </div>
               </div>
 
@@ -232,7 +241,7 @@ export default function AsanaDeepDive({ asanaId, capturedFrameImage, poseTitle, 
                 ))}
               </div>
 
-              {/* Alignment Checkpoints Panel for active angle */}
+              {/* Alignment Checkpoints Panel */}
               {angleData && (
                 <div className="alignment-cues-panel">
                   <h3 className="cues-title">
