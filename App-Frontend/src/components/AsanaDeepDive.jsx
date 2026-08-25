@@ -24,7 +24,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   const [frameDataUrl, setFrameDataUrl] = useState(null);
   const [isAiSynthesizing, setIsAiSynthesizing] = useState(false);
   const [aiResponse, setAiResponse] = useState(null);
-  const [aiProvider, setAiProvider] = useState('meshy');
+  const [aiProvider, setAiProvider] = useState('python-ai');
 
   // Capture exact paused video frame at highest resolution
   useEffect(() => {
@@ -45,6 +45,13 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
     }
   }, [videoElement]);
 
+  // Automatically trigger Python AI View Synthesis on mount with captured frame
+  useEffect(() => {
+    if (frameDataUrl) {
+      handleExecuteAi3dCall('python-ai', frameDataUrl);
+    }
+  }, [frameDataUrl]);
+
   // Fetch asana details from backend
   useEffect(() => {
     setLoading(true);
@@ -61,7 +68,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         intentCategory: 'Equanimity',
         difficulty: 'All Levels',
         category: 'AI 3D Video Analysis',
-        biomechanics: 'Single-Image Generative 3D AI (Meshy AI / Tripo 3D / HMR 2.0). The AI model accepts the paused 2D video frame as single source input via 1 free API call, estimates body geometry, and synthesizes 360° perspective angle views.',
+        biomechanics: 'Single-Image Generative 3D AI Python Microservice (FastAPI + PIL + OpenCV / Meshy / Tripo AI). Dynamically processes input video frame bytes into synthesized 360° novel view perspectives.',
         alignmentCues: {
           0:   { viewLabel: 'Front View', cues: ['Spine vertical plumb line verified', 'Shoulder girdle horizontal', 'Pelvic bowl level'] },
           45:  { viewLabel: 'Front-Right Oblique', cues: ['Right femoral external rotation', 'Ribcage non-flaring'] },
@@ -74,12 +81,12 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         },
         steps: [
           'Video clip paused at exact tutor posture execution frame.',
-          '1 Free API Call dispatched to Meshy / Tripo AI Generative 3D Mesh Engine.',
-          'Generative 3D AI synthesizes 360° perspective angle views directly from the single video frame.',
+          'Python AI Microservice receives frame bytes and executes 3D spatial perspective synthesis.',
+          'Synthesizes 360° perspective angle views directly from the video frame without static URLs.',
         ],
         muscles: ['Core Stabilizers', 'Erector Spinae', 'Quadriceps', 'Gluteals'],
         benefits: [
-          'Direct Generative AI 3D reconstruction via 1 free API call',
+          'Direct Generative Python AI Service 3D view synthesis from frame bytes',
           'Precision anatomical joint angle evaluation',
         ]
       });
@@ -87,8 +94,8 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
     }
   }, [asanaId, poseTitle]);
 
-  // Execute 1 Free API Call to AI 3D Reconstruction Backend
-  const handleExecuteAi3dCall = (provider = 'meshy') => {
+  // Execute API Call to Python AI Microservice via Spring Boot Bridge
+  const handleExecuteAi3dCall = (provider = 'python-ai', frameImg = frameDataUrl) => {
     setIsAiSynthesizing(true);
     setAiProvider(provider);
 
@@ -96,7 +103,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        frameImageUrl: frameDataUrl || '',
+        frameImageUrl: frameImg || '',
         poseTitle: asana?.name || poseTitle || 'Yoga Posture',
         serviceProvider: provider
       })
@@ -136,7 +143,11 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   if (!asana) return null;
 
   const angleData = asana.alignmentCues?.[currentAngle];
-  const sourceImage = frameDataUrl || asana.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80';
+
+  // Resolve dynamic AI synthesized image for current angle:
+  // Use Python AI microservice generated base64 image if available, else exact captured video frame
+  const aiSynthesizedImageForAngle = aiResponse?.synthesizedAngles?.[String(currentAngle)];
+  const activeDisplayImage = aiSynthesizedImageForAngle || frameDataUrl || asana.thumbnailUrl;
 
   // Compute 3D Perspective Matrix Shift for Current Angle
   const transformConfig = ANGLE_TRANSFORMS[currentAngle] || ANGLE_TRANSFORMS[0];
@@ -163,7 +174,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
             <span className="meta-pill intent">{asana.intentCategory}</span>
             <span className="meta-pill difficulty">{asana.difficulty}</span>
             <span className="meta-pill captured-tag" style={{ background: 'var(--accent-saffron)', color: '#fff' }}>
-              <Cpu size={12} /> 1 Free API Call (Meshy / Tripo AI)
+              <Cpu size={12} /> Python AI Microservice (Port 5001)
             </span>
           </div>
         </div>
@@ -171,7 +182,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         {/* Tab Bar */}
         <div className="deepdive-tabs">
           <button className={`dd-tab ${activeTab === '360' ? 'active' : ''}`} onClick={() => setActiveTab('360')}>
-            <Sparkles size={16} /> 360° AI Perspective View ({currentAngle}°)
+            <Sparkles size={16} /> Python AI 360° View Synthesis ({currentAngle}°)
           </button>
           <button className={`dd-tab ${activeTab === 'science' ? 'active' : ''}`} onClick={() => setActiveTab('science')}>
             <Zap size={16} /> Science
@@ -187,48 +198,48 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
           {activeTab === '360' && (
             <div className="rotation-viewer">
 
-              {/* Top AI 1 Free API Call Trigger Bar */}
+              {/* Python AI Microservice Status Bar */}
               <div className="ai-pipeline-bar" style={{ marginBottom: '1rem' }}>
                 <div className="pipeline-info">
                   <Cpu size={20} color="#2C5E3B" />
                   <div>
-                    <div className="pipeline-title">Single-Image Generative 3D Mesh AI</div>
+                    <div className="pipeline-title">Python AI 3D View Synthesizer (FastAPI)</div>
                     <div className="pipeline-sub">
-                      {aiResponse ? aiResponse.message : "Generate 360° posture mesh via 1 Free API call (Meshy / Tripo AI)"}
+                      {aiResponse ? `${aiResponse.provider} • Task: ${aiResponse.taskId}` : "Dynamically processing frame bytes via Python AI Microservice"}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="ai-generate-btn" onClick={() => handleExecuteAi3dCall('meshy')} disabled={isAiSynthesizing}>
-                    <Sparkles size={14} /> Meshy AI (1 Free Call)
+                  <button className="ai-generate-btn" onClick={() => handleExecuteAi3dCall('python-ai')} disabled={isAiSynthesizing}>
+                    <RefreshCw size={14} className={isAiSynthesizing ? "spin-icon" : ""} /> Python AI Synthesizer
                   </button>
-                  <button className="ai-generate-btn" style={{ background: 'var(--accent-green)' }} onClick={() => handleExecuteAi3dCall('tripo')} disabled={isAiSynthesizing}>
-                    <Box size={14} /> Tripo 3D AI
+                  <button className="ai-generate-btn" style={{ background: 'var(--accent-green)' }} onClick={() => handleExecuteAi3dCall('meshy')} disabled={isAiSynthesizing}>
+                    <Sparkles size={14} /> Meshy 3D AI
                   </button>
                 </div>
               </div>
 
-              {/* Dynamic 3D Perspective Shifting Viewport */}
+              {/* Dynamic 3D Perspective Viewport */}
               <div className="exact-frame-viewport" style={{ perspective: '1000px', overflow: 'hidden' }}>
 
-                {/* AI Generative Perspective Processing Overlay */}
+                {/* AI Processing Overlay */}
                 {isAiSynthesizing && (
-                  <div className="ai-loading-box" style={{ position: 'absolute', zIndex: 12, background: 'rgba(0, 0, 0, 0.6)', width: '100%', height: '100%' }}>
+                  <div className="ai-loading-box" style={{ position: 'absolute', zIndex: 12, background: 'rgba(0, 0, 0, 0.65)', width: '100%', height: '100%' }}>
                     <RefreshCw className="spin-icon" size={28} color="#D96B27" />
                     <p style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.9rem' }}>
-                      Calling {aiProvider.toUpperCase()} AI 3D Generator (1 Free API Call)…
+                      Python AI Engine Synthesizing {currentAngle}° ({transformConfig.label}) View…
                     </p>
                     <span style={{ fontSize: '0.8rem', color: '#E0E0E0' }}>
-                      Synthesizing {currentAngle}° ({transformConfig.label}) perspective angle from video frame
+                      Processing frame bytes on http://localhost:5001/
                     </span>
                   </div>
                 )}
 
-                {/* Exact Video Frame Shifting Visibly in 3D Perspective Space */}
+                {/* Dynamic AI Synthesized Image View */}
                 <img
-                  src={sourceImage}
-                  alt={`Paused Video Frame - ${currentAngle}° AI Perspective View`}
+                  src={activeDisplayImage}
+                  alt={`AI Synthesized ${currentAngle}° Perspective View`}
                   className="exact-frame-img"
                   style={transformStyle}
                 />
@@ -243,16 +254,16 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
                 {/* AI Posture Analysis Overlay */}
                 <div className="ai-metrics-overlay">
                   <div className="metric-pill">
-                    <CheckCircle2 size={12} color="#2C5E3B" /> 3D Perspective: {currentAngle}° ({transformConfig.label})
+                    <CheckCircle2 size={12} color="#2C5E3B" /> AI View: {currentAngle}° ({transformConfig.label})
                   </div>
                   <div className="metric-pill">
-                    <Sparkles size={12} color="#D96B27" /> AI API Call: {aiResponse ? aiResponse.status : "READY (1 Free Call)"}
+                    <Sparkles size={12} color="#D96B27" /> Engine: Python AI (Port 5001)
                   </div>
                 </div>
 
                 {/* Drag / Select Overlay */}
                 <div className="pose-drag-overlay">
-                  <Cpu size={14} /> Click angle chips below to shift 3D perspective view from 0° to 315°
+                  <Cpu size={14} /> Click angle chips below to switch Python AI synthesized 3D views (0° to 315°)
                 </div>
               </div>
 
