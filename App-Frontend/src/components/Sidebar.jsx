@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Film, Search, Heart, MessageSquare, User, Compass, LogOut } from 'lucide-react';
+import { Home, Film, Search, Heart, MessageSquare, User, Compass, LogOut, Play } from 'lucide-react';
 
-export default function Sidebar({ activeTab, onSelectTab, user, onLogout }) {
+export default function Sidebar({ activeTab, onSelectTab, user, onLogout, onStartPractice }) {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'clips', label: 'Mindful Clips', icon: Film },
@@ -18,6 +18,12 @@ export default function Sidebar({ activeTab, onSelectTab, user, onLogout }) {
         <Compass className="brand-icon" size={32} />
         <span className="sidebar-brand-name">INNER COMPASS</span>
       </div>
+
+      {/* Start Practice CTA */}
+      <button className="sidebar-practice-btn" onClick={onStartPractice}>
+        <Play size={20} />
+        <span>Start Practice</span>
+      </button>
 
       {/* Navigation List */}
       <nav className="sidebar-nav">

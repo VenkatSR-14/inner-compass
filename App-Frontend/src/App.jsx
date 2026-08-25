@@ -9,11 +9,13 @@ import SearchPage from './components/SearchPage';
 import LikesPage from './components/LikesPage';
 import MessagingPage from './components/MessagingPage';
 import Dashboard from './components/Dashboard';
+import StartPracticeModal from './components/StartPracticeModal';
 
 export default function App() {
   const [authTab, setAuthTab] = useState('login'); // 'login' | 'register'
   const [user, setUser] = useState(null);
   const [activeNavTab, setActiveNavTab] = useState('home'); // Default post-login landing: 'home'
+  const [isPracticeOpen, setIsPracticeOpen] = useState(false);
 
   const handleAuthSuccess = (userData) => {
     setUser(userData);
@@ -75,6 +77,7 @@ export default function App() {
             onSelectTab={setActiveNavTab}
             user={user}
             onLogout={handleLogout}
+            onStartPractice={() => setIsPracticeOpen(true)}
           />
 
           <main className="main-content-viewport">
@@ -85,6 +88,12 @@ export default function App() {
             {activeNavTab === 'messages' && <MessagingPage />}
             {activeNavTab === 'profile' && <Dashboard user={user} onLogout={handleLogout} />}
           </main>
+
+          {/* Practice Engine Modal */}
+          <StartPracticeModal
+            isOpen={isPracticeOpen}
+            onClose={() => setIsPracticeOpen(false)}
+          />
         </div>
       )}
     </div>
