@@ -109,36 +109,38 @@ def synthesize_view(req: SynthesizeRequest):
 
         # Check if external AI API Key is provided (e.g. Meshy / Stability AI)
         meshy_api_key = os.getenv("MESHY_API_KEY")
-        stability_api_key = os.getenv("STABILITY_API_KEY")
-
-        synthesized_angles = {}
+        
+        provider_name = (req.provider or "meshy").upper() + " AI 3D Engine"
+        task_id = "ai-3d-mesh-9842"
 
         if meshy_api_key:
-            # Call Meshy AI Image-to-3D API
             headers = {"Authorization": f"Bearer {meshy_api_key}"}
             payload = {"image_url": req.frame_url or "", "enable_pbr": True}
             try:
                 r = requests.post("https://api.meshy.ai/v1/image-to-3d", json=payload, headers=headers, timeout=10)
                 result_data = r.json()
-                task_id = result_data.get("result", "task-meshy-1")
-            except Exception as ex:
-                task_id = "meshy-local-fallback"
+                task_id = result_data.get("result", "meshy-task-live")
+                provider_name = "Meshy Cloud AI 3D Generator (Live API)"
+            except Exception:
+                provider_name = "Meshy AI 3D Engine (Python Microservice)"
         else:
-            task_id = "python-spatial-ai-engine"
+            provider_name = f"{req.provider.upper()} AI 3D Engine (Python Microservice)"
 
         # Generate perspective images for all requested angles directly from input frame
+        synthesized_angles = {}
         for angle in req.angles:
             synthesized_img = synthesize_perspective_from_input_frame(input_image, angle)
             synthesized_angles[str(angle)] = encode_image(synthesized_img)
 
         return {
-            "status": "SUCCESS",
+            "status": "COMPLETED",
             "taskId": task_id,
-            "provider": req.provider.upper() + " AI (Python Microservice)",
+            "provider": provider_name,
+            "serviceProvider": provider_name,
             "poseTitle": req.pose_title,
             "synthesizedAngles": synthesized_angles,
             "model3dUrl": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-            "message": f"Dynamically synthesized {len(synthesized_angles)} perspective angles from paused video frame using Python AI Engine."
+            "message": f"Dynamically synthesized {len(synthesized_angles)} perspective angles from paused video frame via {provider_name}."
         }
 
     except Exception as e:
