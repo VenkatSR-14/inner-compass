@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS content_schema.short_videos (
 CREATE INDEX IF NOT EXISTS idx_short_videos_intent ON content_schema.short_videos(intent_category);
 CREATE INDEX IF NOT EXISTS idx_short_videos_created_at ON content_schema.short_videos(created_at DESC);
 
--- Clear and update initial Mindful Clips with authentic HD Yoga Practitioner Video
+-- Clear and update initial Mindful Clips with local high-quality Yoga Tutor video
 TRUNCATE TABLE content_schema.short_videos RESTART IDENTITY CASCADE;
 
 INSERT INTO content_schema.short_videos (title, description, video_url, thumbnail_url, duration_seconds, intent_category, author_id, author_name, likes_count, views_count)
 VALUES 
-('Yoga Practitioner Breath & Posture Calibration', 'Authentic yoga practitioner demonstrating posture execution, spinal plumb line, and breath anchoring.', 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Yoga Practitioner', 142, 1205),
-('Standing Postural Plumb Line', 'Yoga practitioner alignment breakdown for standing posture and pelvic neutrality.', 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Yoga Practitioner', 98, 840),
-('Somatic Grounding Posture Hold', 'Yoga practitioner demonstrating grounding posture, hip external rotation, and Drishti gaze.', 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Yoga Practitioner', 215, 1940);
+('Authentic Yoga Practice & Posture Calibration', 'Yoga practitioner demonstrating posture execution, spinal alignment, and breath anchoring.', '/videos/yoga_tutor_demo.mp4', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Yoga Tutor Guide', 142, 1205),
+('Standing Postural Plumb Line Calibration', 'Yoga practitioner alignment breakdown for standing posture and pelvic neutrality.', '/videos/yoga_tutor_demo.mp4', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Yoga Tutor Guide', 98, 840),
+('Somatic Grounding Posture Hold', 'Yoga practitioner demonstrating grounding posture, hip external rotation, and Drishti gaze.', '/videos/yoga_tutor_demo.mp4', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Yoga Tutor Guide', 215, 1940);

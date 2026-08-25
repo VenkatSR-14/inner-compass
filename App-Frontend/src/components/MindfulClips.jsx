@@ -5,26 +5,26 @@ import AsanaDeepDive from './AsanaDeepDive';
 const SAMPLE_CLIPS = [
   {
     id: 1,
-    title: 'Yoga Practitioner Breath & Posture Calibration',
-    description: 'Authentic yoga practitioner demonstrating posture execution, spinal plumb line, and breath anchoring.',
-    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
+    title: 'Authentic Yoga Practice & Posture Calibration',
+    description: 'Yoga practitioner demonstrating posture execution, spinal alignment, and breath anchoring.',
+    videoUrl: '/videos/yoga_tutor_demo.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 30,
     intentCategory: 'Equanimity',
-    authorName: 'Yoga Practitioner',
+    authorName: 'Yoga Tutor Guide',
     likesCount: 142,
     isLiked: false,
     asanaId: 1,
   },
   {
     id: 2,
-    title: 'Standing Postural Plumb Line',
+    title: 'Standing Postural Plumb Line Calibration',
     description: 'Yoga practitioner alignment breakdown for standing posture and pelvic neutrality.',
-    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
+    videoUrl: '/videos/yoga_tutor_demo.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 45,
     intentCategory: 'Clarity',
-    authorName: 'Yoga Practitioner',
+    authorName: 'Yoga Tutor Guide',
     likesCount: 98,
     isLiked: true,
     asanaId: 2,
@@ -33,11 +33,11 @@ const SAMPLE_CLIPS = [
     id: 3,
     title: 'Somatic Grounding Posture Hold',
     description: 'Yoga practitioner demonstrating grounding posture, hip external rotation, and Drishti gaze.',
-    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
+    videoUrl: '/videos/yoga_tutor_demo.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 25,
     intentCategory: 'Somatic Grounding',
-    authorName: 'Yoga Practitioner',
+    authorName: 'Yoga Tutor Guide',
     likesCount: 215,
     isLiked: false,
     asanaId: 3,
@@ -139,7 +139,6 @@ export default function MindfulClips() {
             playsInline
             controls
             preload="auto"
-            crossOrigin="anonymous"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />
