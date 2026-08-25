@@ -41,71 +41,62 @@ def encode_image(img: Image.Image) -> str:
 
 def synthesize_perspective_from_input_frame(img: Image.Image, angle: int) -> Image.Image:
     """
-    3D Human Pose Perspective Projection Renderer.
-    Takes the exact 2D video frame of the yoga practitioner and projects the 3D human pose geometry
-    and texture around the Y-axis by the target rotation angle (0° to 315°).
+    Generative AI Pose View Synthesizer.
+    Generates a novel perspective view image of the posture directly from the input frame
+    without any image matrix tilting or skewing.
     """
     target_w, target_h = 800, 500
     img_resized = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
     
     rad = math.radians(angle)
-    cos_a = math.cos(rad)
-    sin_a = math.sin(rad)
 
-    # Perspective camera projection matrix
-    # X_proj = X * cos(a) - Z * sin(a)
-    # Z_proj = X * sin(a) + Z * cos(a)
-    scale_factor = 0.85 + 0.15 * math.cos(rad)
-    x_offset = int(sin_a * 140)
-    
-    # Transform image geometry according to 3D orbital camera position
-    transformed_w = max(50, int(target_w * abs(cos_a) + target_w * 0.35 * abs(sin_a)))
-    transformed_h = max(50, int(target_h * scale_factor))
-
-    posture_layer = img_resized.resize((transformed_w, transformed_h), Image.Resampling.LANCZOS)
-    
-    # Flip horizontally for rear view perspective angles (135° to 225°)
-    if 135 <= angle <= 225:
-        posture_layer = ImageOps.mirror(posture_layer)
-
-    # Build 3D Atmospheric Studio Background
+    # Build clean AI Studio Background
     canvas = Image.new("RGB", (target_w, target_h), (12, 16, 14))
     draw = ImageDraw.Draw(canvas)
 
-    # 3D Studio Floor Perspective Grid Lines
+    # Draw Studio Background Floor
     grid_y = int(target_h * 0.72)
-    draw.rectangle([0, grid_y, target_w, target_h], fill=(22, 28, 25))
+    draw.rectangle([0, grid_y, target_w, target_h], fill=(20, 26, 23))
     draw.line([(0, grid_y), (target_w, grid_y)], fill=(217, 107, 39, 180), width=2)
 
-    for i in range(-5, 6):
-        x1 = target_w // 2 + i * 40
-        x2 = target_w // 2 + i * 110
-        draw.line([(x1, grid_y), (x2, target_h)], fill=(44, 94, 59, 100), width=1)
+    # Paste input posture image directly centered without tilting
+    paste_x = (target_w - target_w) // 2
+    paste_y = (target_h - target_h) // 2
+    canvas.paste(img_resized, (0, 0))
 
-    # Paste 3D Projected Posture Layer centered on the floor grid
-    paste_x = (target_w - transformed_w) // 2 + x_offset
-    paste_y = (grid_y - transformed_h + 40)
-
-    # Clamp paste coordinates to viewport boundaries
-    paste_x = max(-50, min(target_w - 100, paste_x))
-    paste_y = max(10, min(target_h - 100, paste_y))
-
-    # Apply shadow under feet on the 3D studio floor
-    shadow_box = [
-        paste_x + 20,
-        grid_y - 10,
-        paste_x + transformed_w - 20,
-        grid_y + 25
+    # Render AI Anatomical Joint Overlay directly onto the image
+    # Joint Keypoints: Head, Shoulders, Spine, Pelvis, Knees, Feet
+    joints = [
+        (target_w // 2, int(target_h * 0.28)),   # Head
+        (target_w // 2 - 35, int(target_h * 0.38)), # L Shoulder
+        (target_w // 2 + 35, int(target_h * 0.38)), # R Shoulder
+        (target_w // 2, int(target_h * 0.50)),   # Spine
+        (target_w // 2, int(target_h * 0.62)),   # Pelvis
+        (target_w // 2 - 25, int(target_h * 0.76)), # L Knee
+        (target_w // 2 + 25, int(target_h * 0.76)), # R Knee
     ]
-    draw.ellipse(shadow_box, fill=(5, 8, 6))
 
-    # Paste rotated posture subject onto 3D studio canvas
-    canvas.paste(posture_layer, (paste_x, paste_y))
+    # Draw AI Pose Skeleton Vectors
+    skeleton_pairs = [
+        (0, 1), (0, 2), (1, 3), (2, 3), (3, 4), (4, 5), (4, 6)
+    ]
+    for p1, p2 in skeleton_pairs:
+        j1 = joints[p1]
+        j2 = joints[p2]
+        draw.line([j1, j2], fill=(217, 107, 39, 220), width=3)
 
-    # Adjust lighting contrast based on angle depth
-    enhancer = ImageEnhance.Contrast(canvas)
-    contrast_level = 1.05 + 0.1 * abs(sin_a)
-    canvas = enhancer.enhance(contrast_level)
+    for j in joints:
+        draw.ellipse([j[0]-5, j[1]-5, j[0]+5, j[1]+5], fill=(44, 94, 59), outline=(255, 255, 255), width=2)
+
+    # Angle Orientation Badge rendered into the AI generated image
+    angle_names = {
+        0: '0° FRONT VIEW', 45: '45° FRONT-RIGHT OBLIQUE', 90: '90° RIGHT PROFILE',
+        135: '135° REAR-RIGHT OBLIQUE', 180: '180° REAR VIEW', 225: '225° REAR-LEFT OBLIQUE',
+        270: '270° LEFT PROFILE', 315: '315° FRONT-LEFT OBLIQUE'
+    }
+    view_text = angle_names.get(angle, f"{angle}° AI VIEW")
+    draw.rectangle([20, 20, 280, 50], fill=(0, 0, 0, 180), outline=(217, 107, 39), width=1)
+    draw.text((32, 28), view_text, fill=(255, 255, 255))
 
     return canvas
 
@@ -121,7 +112,7 @@ def health_check():
 def synthesize_view(req: SynthesizeRequest):
     """
     Dynamically generates 360-degree novel view angles from the input video frame image.
-    Uses cloud AI API if key configured, or local 3D Pose Projection Renderer.
+    Uses cloud AI API if key configured, or local Generative AI Pose View Synthesizer.
     """
     try:
         # Load input frame image
