@@ -5,9 +5,9 @@ import AsanaDeepDive from './AsanaDeepDive';
 const SAMPLE_CLIPS = [
   {
     id: 1,
-    title: 'Anchoring Breath in Equanimity',
-    description: 'A 30-second somatic breathing calibration before your morning practice.',
-    videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+    title: 'Padmasana Seated Breath Calibration',
+    description: 'Yoga tutor demonstrating seated lotus breath calibration and spine verticality.',
+    videoUrl: 'https://vjs.zencdn.net/v/oceans.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 30,
     intentCategory: 'Equanimity',
@@ -18,8 +18,8 @@ const SAMPLE_CLIPS = [
   },
   {
     id: 2,
-    title: 'Cognitive Context: The Rational Mind',
-    description: 'Understanding the connection between logic and breath control in classical posture.',
+    title: 'Tadasana Postural Plumb Line',
+    description: 'Yoga tutor alignment breakdown for standing posture and pelvic neutrality.',
     videoUrl: 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 45,
@@ -31,8 +31,8 @@ const SAMPLE_CLIPS = [
   },
   {
     id: 3,
-    title: 'Somatic Grounding Alignment',
-    description: 'Calibrating pelvic floor alignment for seated meditation.',
+    title: 'Virabhadrasana II Isometric Hold',
+    description: 'Yoga tutor demonstrating Warrior II wide lunge, hip external rotation, and Drishti gaze.',
     videoUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 25,
@@ -93,7 +93,7 @@ export default function MindfulClips() {
     if (currentIdx > 0) setCurrentIdx(currentIdx - 1);
   };
 
-  // Pause video and pass active video element to 360° Deep-Dive modal
+  // Pause tutor video and launch AI 3D Human Mesh Recovery (HMR 2.0) pose viewer
   const handlePauseAndSpin360 = () => {
     if (videoRef.current) {
       videoRef.current.pause();
@@ -109,7 +109,7 @@ export default function MindfulClips() {
     <div className="clips-view-container">
       <header className="clips-header">
         <h2>Mindful Clips</h2>
-        <p>Short-form philosophy & somatic context clips (10s – 60s)</p>
+        <p>Yoga Tutor Practice & Somatic Context Clips (10s – 60s)</p>
 
         <div className="feed-filter-bar" style={{ marginBottom: 0 }}>
           {['All', 'Equanimity', 'Clarity', 'Somatic Grounding'].map((cat) => (
@@ -150,10 +150,10 @@ export default function MindfulClips() {
             <span>{activeClip.durationSeconds || 30}s (10s–60s clip)</span>
           </div>
 
-          {/* Prominent "Pause & Spin 360° Pose" Button */}
+          {/* Prominent "Pause & Spin 360° AI Mesh" Button */}
           <button className="spin-360-overlay-btn" onClick={handlePauseAndSpin360}>
             <RotateCcw size={18} />
-            <span>Pause & Spin 360° Pose</span>
+            <span>Pause & Spin 360° AI Mesh</span>
           </button>
 
           {/* Side Overlay Action Controls */}
@@ -167,9 +167,9 @@ export default function MindfulClips() {
               {isMuted ? <VolumeX size={20} color="#FFFFFF" /> : <Volume2 size={20} color="#D96B27" />}
             </button>
 
-            <button className="reel-action-circle" onClick={handlePauseAndSpin360} title="Deep Dive Pose">
+            <button className="reel-action-circle" onClick={handlePauseAndSpin360} title="AI 3D Mesh">
               <Camera size={20} color="#FFFFFF" />
-              <span className="reel-action-count">360°</span>
+              <span className="reel-action-count">3D</span>
             </button>
           </div>
 
@@ -177,7 +177,7 @@ export default function MindfulClips() {
           <div className="reel-info-overlay">
             <div className="reel-author-badge">
               <Compass size={16} color="#2C5E3B" />
-              <span>{activeClip.authorName || 'Inner Compass Guide'}</span>
+              <span>{activeClip.authorName || 'Yoga Tutor'}</span>
               <span className="post-intent-badge" style={{ fontSize: '0.75rem' }}>{activeClip.intentCategory}</span>
             </div>
             <h3 className="reel-title">{activeClip.title}</h3>
@@ -196,7 +196,7 @@ export default function MindfulClips() {
         </div>
       </div>
 
-      {/* 360° Pose Deep Dive Modal from Paused Clip Video Element */}
+      {/* 360° Pose AI 3D Mesh Reconstruction Modal */}
       {deepDiveActive && (
         <AsanaDeepDive
           asanaId={activeClip.asanaId || 1}

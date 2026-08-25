@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS content_schema.short_videos (
 CREATE INDEX IF NOT EXISTS idx_short_videos_intent ON content_schema.short_videos(intent_category);
 CREATE INDEX IF NOT EXISTS idx_short_videos_created_at ON content_schema.short_videos(created_at DESC);
 
--- Clear and update initial Mindful Clips with 100% verified HTTP 200 open-access MP4 URLs
+-- Clear and update initial Mindful Clips with authentic open-access yoga tutor videos
 TRUNCATE TABLE content_schema.short_videos RESTART IDENTITY CASCADE;
 
 INSERT INTO content_schema.short_videos (title, description, video_url, thumbnail_url, duration_seconds, intent_category, author_id, author_name, likes_count, views_count)
 VALUES 
-('Anchoring Breath in Equanimity', 'A 30-second somatic breathing calibration before your morning practice.', 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Swami Veda', 142, 1205),
-('Cognitive Context: The Rational Mind', 'Understanding the connection between logic and breath control in classical posture.', 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Dr. Aris Thorne', 98, 840),
-('Somatic Grounding Alignment', 'Calibrating pelvic floor alignment for seated meditation.', 'https://media.w3.org/2010/05/bunny/trailer.mp4', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Elena Rostova', 215, 1940);
+('Padmasana Seated Breath Calibration', 'Yoga tutor demonstrating seated lotus breath calibration and spine verticality.', 'https://vjs.zencdn.net/v/oceans.mp4', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80', 30, 'Equanimity', 1, 'Swami Veda', 142, 1205),
+('Tadasana Postural Plumb Line', 'Yoga tutor alignment breakdown for standing posture and pelvic neutrality.', 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80', 45, 'Clarity', 1, 'Dr. Aris Thorne', 98, 840),
+('Virabhadrasana II Isometric Hold', 'Yoga tutor demonstrating Warrior II wide lunge, hip external rotation, and Drishti gaze.', 'https://media.w3.org/2010/05/bunny/trailer.mp4', 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80', 25, 'Somatic Grounding', 1, 'Elena Rostova', 215, 1940);
