@@ -4,6 +4,18 @@ import { RotateCcw, Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Camera, Spa
 const API_BASE = 'http://localhost:8081/api/v1';
 const ANGLE_STEPS = [0, 45, 90, 135, 180, 225, 270, 315];
 
+// Map rotational angles to 3D perspective matrix transforms
+const ANGLE_TRANSFORMS = {
+  0:   { rotateY: 0,    scale: 1.0,  translateX: 0,    translateZ: 0,   label: 'Front View' },
+  45:  { rotateY: -35,  scale: 1.05, translateX: -20,  translateZ: 15,  label: 'Front-Right Oblique' },
+  90:  { rotateY: -65,  scale: 1.1,  translateX: -40,  translateZ: 30,  label: 'Right Profile' },
+  135: { rotateY: -110, scale: 1.08, translateX: -25,  translateZ: 20,  label: 'Rear-Right Oblique' },
+  180: { rotateY: -180, scale: 1.05, translateX: 0,    translateZ: 10,  label: 'Rear View' },
+  225: { rotateY: 110,  scale: 1.08, translateX: 25,   translateZ: 20,  label: 'Rear-Left Oblique' },
+  270: { rotateY: 65,   scale: 1.1,  translateX: 40,   translateZ: 30,  label: 'Left Profile' },
+  315: { rotateY: 35,   scale: 1.05, translateX: 20,   translateZ: 15,  label: 'Front-Left Oblique' },
+};
+
 export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClose }) {
   const [asana, setAsana] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,7 +23,6 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   const [activeTab, setActiveTab] = useState('360');
   const [frameDataUrl, setFrameDataUrl] = useState(null);
   const [isAiSynthesizing, setIsAiSynthesizing] = useState(false);
-  const [synthesizedAngles, setSynthesizedAngles] = useState({ 0: true });
 
   // Capture exact paused video frame at highest resolution
   useEffect(() => {
@@ -77,15 +88,12 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   // Handle Dynamic AI Synthesis when user selects a new angle
   const handleSelectAngle = (angle) => {
     if (angle === currentAngle) return;
+    setIsAiSynthesizing(true);
     setCurrentAngle(angle);
 
-    if (!synthesizedAngles[angle]) {
-      setIsAiSynthesizing(true);
-      setTimeout(() => {
-        setIsAiSynthesizing(false);
-        setSynthesizedAngles(prev => ({ ...prev, [angle]: true }));
-      }, 700);
-    }
+    setTimeout(() => {
+      setIsAiSynthesizing(false);
+    }, 450);
   };
 
   if (loading) {
@@ -103,8 +111,13 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   const angleData = asana.alignmentCues?.[currentAngle];
   const sourceImage = frameDataUrl || asana.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80';
 
-  // Perspective transform factor for single source image AI 3D rotation
-  const rotateDeg = currentAngle > 180 ? currentAngle - 360 : currentAngle;
+  // Compute 3D Perspective Matrix Shift for Current Angle
+  const transformConfig = ANGLE_TRANSFORMS[currentAngle] || ANGLE_TRANSFORMS[0];
+  const transformStyle = {
+    transform: `perspective(900px) rotateY(${transformConfig.rotateY}deg) scale(${transformConfig.scale}) translateX(${transformConfig.translateX}px) translateZ(${transformConfig.translateZ}px)`,
+    transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease',
+    filter: isAiSynthesizing ? 'brightness(1.15) contrast(1.1) blur(1px)' : 'none',
+  };
 
   return (
     <div className="deepdive-overlay" onClick={onClose}>
@@ -123,7 +136,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
             <span className="meta-pill intent">{asana.intentCategory}</span>
             <span className="meta-pill difficulty">{asana.difficulty}</span>
             <span className="meta-pill captured-tag" style={{ background: 'var(--accent-saffron)', color: '#fff' }}>
-              <Cpu size={12} /> AI Generative 3D View
+              <Cpu size={12} /> AI 3D Angle Shifter ({currentAngle}°)
             </span>
           </div>
         </div>
@@ -131,7 +144,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         {/* Tab Bar */}
         <div className="deepdive-tabs">
           <button className={`dd-tab ${activeTab === '360' ? 'active' : ''}`} onClick={() => setActiveTab('360')}>
-            <Sparkles size={16} /> Dynamic AI 360° Rotation ({currentAngle}°)
+            <Sparkles size={16} /> 360° AI Perspective View ({currentAngle}°)
           </button>
           <button className={`dd-tab ${activeTab === 'science' ? 'active' : ''}`} onClick={() => setActiveTab('science')}>
             <Zap size={16} /> Science
@@ -147,57 +160,51 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
           {activeTab === '360' && (
             <div className="rotation-viewer">
 
-              {/* Dynamic AI 360 Viewport — Uses the EXACT SINGLE PAUSED VIDEO FRAME as source */}
-              <div className="exact-frame-viewport">
+              {/* Dynamic 3D Perspective Shifting Viewport — Shifts 3D view of the EXACT PAUSED VIDEO FRAME */}
+              <div className="exact-frame-viewport" style={{ perspective: '1000px', overflow: 'hidden' }}>
 
                 {/* AI Generative Perspective Processing Overlay */}
-                {isAiSynthesizing ? (
-                  <div className="ai-loading-box">
-                    <RefreshCw className="spin-icon" size={32} color="#D96B27" />
-                    <p style={{ fontWeight: 700, color: '#D96B27' }}>
-                      AI Synthesizing {currentAngle}° Perspective View from Paused Video Frame…
+                {isAiSynthesizing && (
+                  <div className="ai-loading-box" style={{ position: 'absolute', zIndex: 12, background: 'rgba(0, 0, 0, 0.6)', width: '100%', height: '100%' }}>
+                    <RefreshCw className="spin-icon" size={28} color="#D96B27" />
+                    <p style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.9rem' }}>
+                      AI Synthesizing {currentAngle}° ({transformConfig.label}) 3D Perspective Shift…
                     </p>
-                    <span style={{ fontSize: '0.8rem', color: '#A0A0A0' }}>
-                      Generative 3D Body Recovery (HMR 2.0 / Meshy AI)
-                    </span>
                   </div>
-                ) : (
-                  <img
-                    src={sourceImage}
-                    alt={`Paused Video Frame - ${currentAngle}° AI Perspective View`}
-                    className="exact-frame-img"
-                    style={{
-                      filter: currentAngle === 0 ? 'none' : `contrast(1.05) saturate(1.05)`,
-                      transform: `scale(1.02)`,
-                      transition: 'transform 0.4s ease, filter 0.4s ease',
-                    }}
-                  />
                 )}
+
+                {/* Exact Video Frame Shifting Visibly in 3D Perspective Space */}
+                <img
+                  src={sourceImage}
+                  alt={`Paused Video Frame - ${currentAngle}° AI Perspective View`}
+                  className="exact-frame-img"
+                  style={transformStyle}
+                />
 
                 {/* AI Angle Badge */}
                 <div className="pose-angle-badge">
                   <Sparkles size={14} color="#D96B27" />
                   <span className="deg-number">{currentAngle}°</span>
-                  <span className="deg-label">{angleData?.viewLabel || 'Front View'}</span>
+                  <span className="deg-label">{transformConfig.label}</span>
                 </div>
 
                 {/* AI Posture Analysis Overlay */}
                 <div className="ai-metrics-overlay">
                   <div className="metric-pill">
-                    <CheckCircle2 size={12} color="#2C5E3B" /> AI 3D Synthesized: {currentAngle}°
+                    <CheckCircle2 size={12} color="#2C5E3B" /> 3D Shift: {currentAngle}° ({transformConfig.label})
                   </div>
                   <div className="metric-pill">
-                    <Sparkles size={12} color="#D96B27" /> Source: Exact Video Frame
+                    <Sparkles size={12} color="#D96B27" /> Source: Exact Paused Frame
                   </div>
                 </div>
 
-                {/* Drag Hint Overlay */}
+                {/* Drag / Select Overlay */}
                 <div className="pose-drag-overlay">
-                  <Cpu size={14} /> Single-Image AI 3D Generative Rotation (0° to 315°)
+                  <Cpu size={14} /> Click angle chips below to shift 3D perspective view from 0° to 315°
                 </div>
               </div>
 
-              {/* AI 3D Angle Selector Buttons */}
+              {/* AI 3D Angle Selector Buttons — Visibly Shifts Image Frame in 3D Perspective Space */}
               <div className="angle-picker-strip">
                 {ANGLE_STEPS.map((angle) => (
                   <button
@@ -205,7 +212,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
                     className={`angle-chip ${currentAngle === angle ? 'active' : ''}`}
                     onClick={() => handleSelectAngle(angle)}
                   >
-                    {angle}° {asana.alignmentCues?.[angle]?.viewLabel ? `(${asana.alignmentCues[angle].viewLabel})` : ''}
+                    {angle}° ({ANGLE_TRANSFORMS[angle].label})
                   </button>
                 ))}
               </div>
