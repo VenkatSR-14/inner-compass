@@ -5,39 +5,39 @@ import AsanaDeepDive from './AsanaDeepDive';
 const SAMPLE_CLIPS = [
   {
     id: 1,
-    title: 'Vrikshasana Balance & Alignment',
-    description: 'Yoga tutor demonstrating Vrikshasana (Tree Pose) single-leg stability, pelvic leveling, and breath anchoring.',
-    videoUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Yoga_with_Modi%E2%80%94Vrikshasana_%28English%29.webm',
+    title: 'Yoga Practitioner Breath & Posture Calibration',
+    description: 'Authentic yoga practitioner demonstrating posture execution, spinal plumb line, and breath anchoring.',
+    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 30,
     intentCategory: 'Equanimity',
-    authorName: 'Yoga Tutor Guide',
+    authorName: 'Yoga Practitioner',
     likesCount: 142,
     isLiked: false,
     asanaId: 1,
   },
   {
     id: 2,
-    title: 'Tadasana Standing Plumb Line',
-    description: 'Yoga tutor demonstrating Tadasana (Mountain Pose) vertical alignment and weight distribution.',
-    videoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/50/Yoga_with_Modi%E2%80%94Tadasana_%28English%29.webm',
+    title: 'Standing Postural Plumb Line',
+    description: 'Yoga practitioner alignment breakdown for standing posture and pelvic neutrality.',
+    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 45,
     intentCategory: 'Clarity',
-    authorName: 'Yoga Tutor Guide',
+    authorName: 'Yoga Practitioner',
     likesCount: 98,
     isLiked: true,
     asanaId: 2,
   },
   {
     id: 3,
-    title: 'Trikonasana Lateral Alignment',
-    description: 'Yoga tutor demonstrating Trikonasana (Triangle Pose) pelvic angle and spinal extension.',
-    videoUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Yoga_with_Modi%E2%80%94Trikonasana_%28English%29.webm',
+    title: 'Somatic Grounding Posture Hold',
+    description: 'Yoga practitioner demonstrating grounding posture, hip external rotation, and Drishti gaze.',
+    videoUrl: 'https://archive.org/download/YogaForYouHD264119/Yoga%20for%20You%20HD26%204-1-19.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=600&q=80',
     durationSeconds: 25,
     intentCategory: 'Somatic Grounding',
-    authorName: 'Yoga Tutor Guide',
+    authorName: 'Yoga Practitioner',
     likesCount: 215,
     isLiked: false,
     asanaId: 3,
@@ -93,7 +93,7 @@ export default function MindfulClips() {
     if (currentIdx > 0) setCurrentIdx(currentIdx - 1);
   };
 
-  // Pause tutor video and launch 360° Pose Deep Dive
+  // Pause video and launch 360° Pose Deep Dive
   const handlePauseAndSpin360 = () => {
     if (videoRef.current) {
       videoRef.current.pause();
@@ -109,7 +109,7 @@ export default function MindfulClips() {
     <div className="clips-view-container">
       <header className="clips-header">
         <h2>Mindful Clips</h2>
-        <p>Yoga Tutor Posture Demonstration Clips (10s – 60s)</p>
+        <p>Yoga Practitioner Posture Demonstration Clips (10s – 60s)</p>
 
         <div className="feed-filter-bar" style={{ marginBottom: 0 }}>
           {['All', 'Equanimity', 'Clarity', 'Somatic Grounding'].map((cat) => (
@@ -150,10 +150,10 @@ export default function MindfulClips() {
             <span>{activeClip.durationSeconds || 30}s (10s–60s clip)</span>
           </div>
 
-          {/* Prominent "Pause & Spin 360° Pose" Button */}
+          {/* Prominent "Pause & Spin 360° AI Mesh" Button */}
           <button className="spin-360-overlay-btn" onClick={handlePauseAndSpin360}>
             <RotateCcw size={18} />
-            <span>Pause & Spin 360° Pose</span>
+            <span>Pause & Spin 360° AI Mesh</span>
           </button>
 
           {/* Side Overlay Action Controls */}
@@ -167,9 +167,9 @@ export default function MindfulClips() {
               {isMuted ? <VolumeX size={20} color="#FFFFFF" /> : <Volume2 size={20} color="#D96B27" />}
             </button>
 
-            <button className="reel-action-circle" onClick={handlePauseAndSpin360} title="Deep Dive Pose">
+            <button className="reel-action-circle" onClick={handlePauseAndSpin360} title="AI 3D Mesh">
               <Camera size={20} color="#FFFFFF" />
-              <span className="reel-action-count">360°</span>
+              <span className="reel-action-count">3D</span>
             </button>
           </div>
 
@@ -177,7 +177,7 @@ export default function MindfulClips() {
           <div className="reel-info-overlay">
             <div className="reel-author-badge">
               <Compass size={16} color="#2C5E3B" />
-              <span>{activeClip.authorName || 'Yoga Tutor Guide'}</span>
+              <span>{activeClip.authorName || 'Yoga Practitioner'}</span>
               <span className="post-intent-badge" style={{ fontSize: '0.75rem' }}>{activeClip.intentCategory}</span>
             </div>
             <h3 className="reel-title">{activeClip.title}</h3>
