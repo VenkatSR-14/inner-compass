@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { RotateCcw, Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Camera, Sparkles, CheckCircle2, Cpu, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Eye, ChevronLeft, Zap, BookOpen, Target, Layers, Sparkles, CheckCircle2, Cpu, RefreshCw } from 'lucide-react';
 
+const PYTHON_AI_SERVICE = 'http://localhost:5001/api/v1/ai/synthesize-view';
 const API_BASE = 'http://localhost:8081/api/v1';
 const ANGLE_STEPS = [0, 45, 90, 135, 180, 225, 270, 315];
 
@@ -22,7 +23,11 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   const [activeTab, setActiveTab] = useState('360');
   const [frameDataUrl, setFrameDataUrl] = useState(null);
   const [isAiSynthesizing, setIsAiSynthesizing] = useState(false);
-  const [aiResponse, setAiResponse] = useState(null);
+  const [generatedViews, setGeneratedViews] = useState({});
+  const [generationStatus, setGenerationStatus] = useState('');
+
+  // Cache to avoid re-generating the same angle
+  const viewCacheRef = useRef({});
 
   // Capture exact paused video frame at highest resolution
   useEffect(() => {
@@ -43,30 +48,57 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
     }
   }, [videoElement]);
 
-  // Automatically trigger Python AI View Synthesis on mount with captured frame
-  useEffect(() => {
-    if (frameDataUrl) {
-      setIsAiSynthesizing(true);
-      fetch(`${API_BASE}/ai/reconstruct-3d`, {
+  // Generate AI view for a single angle on-demand
+  const generateViewForAngle = useCallback(async (angle) => {
+    // Check cache first
+    if (viewCacheRef.current[angle]) {
+      setGeneratedViews(prev => ({ ...prev, [angle]: viewCacheRef.current[angle] }));
+      return;
+    }
+
+    setIsAiSynthesizing(true);
+    setGenerationStatus(`AI generating ${angle}° ${ANGLE_LABELS[angle]} view...`);
+
+    try {
+      // Call Python AI service directly (faster, no Spring Boot proxy overhead)
+      const response = await fetch(PYTHON_AI_SERVICE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          frameImageUrl: frameDataUrl,
-          poseTitle: poseTitle || 'Yoga Posture',
-          serviceProvider: 'meshy'
+          pose_title: poseTitle || 'Yoga Posture',
+          provider: 'huggingface',
+          angles: [angle],  // Generate only the requested angle
         })
-      })
-        .then(res => res.json())
-        .then(data => {
-          setAiResponse(data);
-          setIsAiSynthesizing(false);
-        })
-        .catch(err => {
-          console.log('AI API call error:', err);
-          setIsAiSynthesizing(false);
-        });
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI service returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      const angleImage = data?.synthesizedAngles?.[String(angle)];
+
+      if (angleImage) {
+        viewCacheRef.current[angle] = angleImage;
+        setGeneratedViews(prev => ({ ...prev, [angle]: angleImage }));
+        setGenerationStatus(`✓ ${angle}° ${ANGLE_LABELS[angle]} — AI Generated`);
+      } else {
+        setGenerationStatus(`⚠ ${angle}° generation returned empty`);
+      }
+    } catch (err) {
+      console.error('AI generation error:', err);
+      setGenerationStatus(`⚠ AI generation failed: ${err.message}`);
+    } finally {
+      setIsAiSynthesizing(false);
     }
-  }, [frameDataUrl, poseTitle]);
+  }, [poseTitle]);
+
+  // Auto-generate front view (0°) on mount
+  useEffect(() => {
+    if (poseTitle) {
+      generateViewForAngle(0);
+    }
+  }, [poseTitle, generateViewForAngle]);
 
   // Fetch asana details from backend
   useEffect(() => {
@@ -80,11 +112,11 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
       setAsana({
         id: 1,
         name: poseTitle || 'Paused Video Frame',
-        englishName: 'AI Generative 3D Angle Reconstruction',
+        englishName: 'AI Novel View Synthesis (FLUX.1)',
         intentCategory: 'Equanimity',
         difficulty: 'All Levels',
-        category: 'AI 3D Video Analysis',
-        biomechanics: 'Single-Image Generative 3D AI Python Microservice. Dynamically processes input video frame bytes into synthesized 360° novel view perspectives.',
+        category: 'AI 3D Novel View',
+        biomechanics: 'Uses HuggingFace FLUX.1-schnell diffusion model to generate photorealistic novel perspective views of the yoga pose from 8 camera angles (0° to 315°). Each view is a unique AI-generated image.',
         alignmentCues: {
           0:   { viewLabel: 'Front View', cues: ['Spine vertical plumb line verified', 'Shoulder girdle horizontal', 'Pelvic bowl level'] },
           45:  { viewLabel: 'Front-Right Oblique', cues: ['Right femoral external rotation', 'Ribcage non-flaring'] },
@@ -97,28 +129,26 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         },
         steps: [
           'Video clip paused at exact tutor posture execution frame.',
-          'AI Microservice receives frame bytes and executes 3D spatial perspective synthesis.',
-          'Synthesizes 360° perspective angle views directly from the video frame without static URLs.',
+          'Pose title extracted from the clip metadata.',
+          'HuggingFace FLUX.1-schnell AI model generates photorealistic images of the pose from each camera angle.',
+          'Click any angle button to generate that specific view on-demand.',
         ],
         muscles: ['Core Stabilizers', 'Erector Spinae', 'Quadriceps', 'Gluteals'],
         benefits: [
-          'Direct Generative Python AI Service 3D view synthesis from frame bytes',
-          'Precision anatomical joint angle evaluation',
+          'AI-generated photorealistic views from 8 camera angles',
+          'Understand anatomical alignment from every perspective',
         ]
       });
       setLoading(false);
     }
   }, [asanaId, poseTitle]);
 
-  // Handle Dynamic AI Synthesis when user selects a new angle
+  // Handle angle selection — trigger AI generation on-demand
   const handleSelectAngle = (angle) => {
-    if (angle === currentAngle) return;
-    setIsAiSynthesizing(true);
     setCurrentAngle(angle);
-
-    setTimeout(() => {
-      setIsAiSynthesizing(false);
-    }, 300);
+    if (!viewCacheRef.current[angle]) {
+      generateViewForAngle(angle);
+    }
   };
 
   if (loading) {
@@ -136,10 +166,9 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
   const angleData = asana.alignmentCues?.[currentAngle];
   const currentLabel = ANGLE_LABELS[currentAngle] || 'Front View';
 
-  // Resolve dynamic AI synthesized image for current angle:
-  // ONLY use the un-tilted, crisp AI synthesized image returned by the Python AI Service!
-  const aiSynthesizedImageForAngle = aiResponse?.synthesizedAngles?.[String(currentAngle)];
-  const activeDisplayImage = aiSynthesizedImageForAngle || frameDataUrl;
+  // Resolve the active display image: AI generated view → paused video frame fallback
+  const aiGeneratedImage = generatedViews[currentAngle];
+  const activeDisplayImage = aiGeneratedImage || frameDataUrl;
 
   return (
     <div className="deepdive-overlay" onClick={onClose}>
@@ -158,7 +187,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
             <span className="meta-pill intent">{asana.intentCategory}</span>
             <span className="meta-pill difficulty">{asana.difficulty}</span>
             <span className="meta-pill captured-tag" style={{ background: 'var(--accent-saffron)', color: '#fff' }}>
-              <Cpu size={12} /> Generative AI View Synthesizer
+              <Cpu size={12} /> FLUX AI Novel View
             </span>
           </div>
         </div>
@@ -166,7 +195,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
         {/* Tab Bar */}
         <div className="deepdive-tabs">
           <button className={`dd-tab ${activeTab === '360' ? 'active' : ''}`} onClick={() => setActiveTab('360')}>
-            <Sparkles size={16} /> Generative AI 360° View ({currentAngle}°)
+            <Sparkles size={16} /> AI 360° View ({currentAngle}°)
           </button>
           <button className={`dd-tab ${activeTab === 'science' ? 'active' : ''}`} onClick={() => setActiveTab('science')}>
             <Zap size={16} /> Science
@@ -182,71 +211,101 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
           {activeTab === '360' && (
             <div className="rotation-viewer">
 
-              {/* Generative AI Posture Viewport — CLEAN FLAT UNTILTED GENERATED IMAGE */}
-              <div className="exact-frame-viewport" style={{ overflow: 'hidden' }}>
+              {/* AI Generated Image Viewport */}
+              <div className="exact-frame-viewport" style={{ overflow: 'hidden', position: 'relative', minHeight: '400px' }}>
 
-                {/* AI Processing Overlay */}
+                {/* AI Generation Loading Overlay */}
                 {isAiSynthesizing && (
-                  <div className="ai-loading-box" style={{ position: 'absolute', zIndex: 12, background: 'rgba(0, 0, 0, 0.65)', width: '100%', height: '100%' }}>
-                    <RefreshCw className="spin-icon" size={28} color="#D96B27" />
-                    <p style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.9rem' }}>
-                      Generative AI Synthesizing {currentAngle}° ({currentLabel}) Posture View…
+                  <div className="ai-loading-box" style={{
+                    position: 'absolute', zIndex: 12, 
+                    background: 'rgba(0, 0, 0, 0.75)', 
+                    width: '100%', height: '100%',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    gap: '1rem',
+                  }}>
+                    <RefreshCw className="spin-icon" size={36} color="#D96B27" style={{ animation: 'spin 1s linear infinite' }} />
+                    <p style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '1rem', textAlign: 'center', padding: '0 1rem' }}>
+                      {generationStatus || `AI Generating ${currentAngle}° View...`}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
+                      FLUX.1-schnell is generating a new image (~5s)
                     </p>
                   </div>
                 )}
 
-                {/* AI Synthesized Image View — NO CSS ROTATION/TILTING ON IMAGE ELEMENT */}
-                {activeDisplayImage && (
+                {/* Display the AI-generated image (flat, no CSS rotation) */}
+                {activeDisplayImage ? (
                   <img
                     src={activeDisplayImage}
-                    alt={`Generative AI ${currentAngle}° Perspective View`}
+                    alt={`AI Generated ${currentAngle}° ${currentLabel}`}
                     className="exact-frame-img"
                     style={{
                       width: '100%',
-                      maxHeight: '420px',
+                      maxHeight: '480px',
                       objectFit: 'contain',
                       transition: 'opacity 0.3s ease',
-                      opacity: isAiSynthesizing ? 0.4 : 1.0,
+                      opacity: isAiSynthesizing ? 0.3 : 1.0,
+                      borderRadius: '8px',
                     }}
                   />
+                ) : (
+                  <div style={{
+                    width: '100%', height: '400px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.3)', borderRadius: '8px',
+                    color: 'var(--text-muted)', fontSize: '0.9rem',
+                  }}>
+                    Click an angle to generate the AI view
+                  </div>
                 )}
 
-                {/* AI Angle Badge */}
+                {/* Angle & Provider Badge */}
                 <div className="pose-angle-badge">
                   <Sparkles size={14} color="#D96B27" />
                   <span className="deg-number">{currentAngle}°</span>
                   <span className="deg-label">{currentLabel}</span>
                 </div>
 
-                {/* AI Posture Analysis Overlay */}
                 <div className="ai-metrics-overlay">
                   <div className="metric-pill">
-                    <CheckCircle2 size={12} color="#2C5E3B" /> AI Synthesized View: {currentAngle}° ({currentLabel})
+                    <CheckCircle2 size={12} color="#2C5E3B" />
+                    {aiGeneratedImage ? 'AI Generated (FLUX.1-schnell)' : 'Paused Video Frame'}
                   </div>
                   <div className="metric-pill">
-                    <Sparkles size={12} color="#D96B27" /> Source: Paused Video Frame
+                    <Sparkles size={12} color="#D96B27" />
+                    {generationStatus || 'Click an angle to generate'}
                   </div>
                 </div>
               </div>
 
-              {/* AI 3D Angle Selector Buttons */}
+              {/* Angle Selector Buttons */}
               <div className="angle-picker-strip">
-                {ANGLE_STEPS.map((angle) => (
-                  <button
-                    key={angle}
-                    className={`angle-chip ${currentAngle === angle ? 'active' : ''}`}
-                    onClick={() => handleSelectAngle(angle)}
-                  >
-                    {angle}° ({ANGLE_LABELS[angle]})
-                  </button>
-                ))}
+                {ANGLE_STEPS.map((angle) => {
+                  const isGenerated = !!viewCacheRef.current[angle] || !!generatedViews[angle];
+                  return (
+                    <button
+                      key={angle}
+                      className={`angle-chip ${currentAngle === angle ? 'active' : ''} ${isGenerated ? 'generated' : ''}`}
+                      onClick={() => handleSelectAngle(angle)}
+                      disabled={isAiSynthesizing && currentAngle !== angle}
+                      style={{
+                        opacity: (isAiSynthesizing && currentAngle !== angle) ? 0.5 : 1,
+                        position: 'relative',
+                      }}
+                    >
+                      {isGenerated && <CheckCircle2 size={10} style={{ marginRight: '4px', color: '#2C5E3B' }} />}
+                      {angle}° {ANGLE_LABELS[angle]}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Anatomical Alignment Checkpoints Panel for current angle */}
+              {/* Alignment Cues */}
               {angleData && (
                 <div className="alignment-cues-panel">
                   <h3 className="cues-title">
-                    <Eye size={18} color="#D96B27" /> AI Anatomical Checkpoints — {angleData.viewLabel} ({currentAngle}°)
+                    <Eye size={18} color="#D96B27" /> Anatomical Checkpoints — {angleData.viewLabel} ({currentAngle}°)
                   </h3>
                   <ul className="cues-list">
                     {angleData.cues.map((cue, i) => (
@@ -269,7 +328,6 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
                   <p className="science-body">{asana.biomechanics}</p>
                 </div>
               )}
-
               {asana.muscles?.length > 0 && (
                 <div className="science-section">
                   <h3 className="science-heading"><Layers size={18} color="#2C5E3B" /> Muscles Activated</h3>
@@ -280,10 +338,9 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
                   </div>
                 </div>
               )}
-
               {asana.benefits?.length > 0 && (
                 <div className="science-section">
-                  <h3 className="science-heading"><Target size={18} color="#D96B27" /> Health & Cognitive Benefits</h3>
+                  <h3 className="science-heading"><Target size={18} color="#D96B27" /> Health Benefits</h3>
                   <ul className="benefits-list">
                     {asana.benefits.map((b, i) => (
                       <li key={i}>{b}</li>
@@ -297,7 +354,7 @@ export default function AsanaDeepDive({ asanaId, videoElement, poseTitle, onClos
           {activeTab === 'steps' && (
             <div className="steps-panel">
               <h3 className="steps-heading">
-                <BookOpen size={18} color="#2C5E3B" /> Execution Steps — {asana.name}
+                <BookOpen size={18} color="#2C5E3B" /> How It Works — {asana.name}
               </h3>
               <ol className="steps-list">
                 {asana.steps?.map((step, i) => (
