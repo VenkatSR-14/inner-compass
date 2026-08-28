@@ -22,3 +22,5 @@ Thumbs.db
 # Temp files
 *.tmp
 *.bak
+App-Backend/AI-Service/venv/
+App-Backend/ai-service/venv/
